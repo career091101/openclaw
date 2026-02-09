@@ -96,6 +96,13 @@ const EXEC_EVENT_PROMPT =
   "Please relay the command output to the user in a helpful way. If the command succeeded, share the relevant output. " +
   "If it failed, explain what went wrong.";
 
+// Prompt used when a cron job (e.g. self-improve) has completed and posted a summary.
+// Without this, the standard heartbeat prompt causes the agent to reply HEARTBEAT_OK,
+// which gets stripped and the cron result is never delivered to the user.
+const CRON_EVENT_PROMPT =
+  "A scheduled task has completed. The result is shown in the system messages above. " +
+  "Please relay the summary to the user. Keep it brief and informative.";
+
 function resolveActiveHoursTimezone(cfg: OpenClawConfig, raw?: string): string {
   const trimmed = raw?.trim();
   if (!trimmed || trimmed === "user") {
@@ -505,13 +512,18 @@ export async function runHeartbeatOnce(opts: {
 
   // Skip heartbeat if HEARTBEAT.md exists but has no actionable content.
   // This saves API calls/costs when the file is effectively empty (only comments/headers).
-  // EXCEPTION: Don't skip for exec events - they have pending system events to process.
+  // EXCEPTION: Don't skip for exec/cron events - they have pending system events to process.
   const isExecEventReason = opts.reason === "exec-event";
+  const isCronEventReason = typeof opts.reason === "string" && opts.reason.startsWith("cron:");
   const workspaceDir = resolveAgentWorkspaceDir(cfg, agentId);
   const heartbeatFilePath = path.join(workspaceDir, DEFAULT_HEARTBEAT_FILENAME);
   try {
     const heartbeatFileContent = await fs.readFile(heartbeatFilePath, "utf-8");
-    if (isHeartbeatContentEffectivelyEmpty(heartbeatFileContent) && !isExecEventReason) {
+    if (
+      isHeartbeatContentEffectivelyEmpty(heartbeatFileContent) &&
+      !isExecEventReason &&
+      !isCronEventReason
+    ) {
       emitHeartbeatEvent({
         status: "skipped",
         reason: "empty-heartbeat-file",
@@ -527,6 +539,12 @@ export async function runHeartbeatOnce(opts: {
   const { entry, sessionKey, storePath } = resolveHeartbeatSession(cfg, agentId, heartbeat);
   const previousUpdatedAt = entry?.updatedAt;
   const delivery = resolveHeartbeatDeliveryTarget({ cfg, entry, heartbeat });
+  log.debug("heartbeat delivery target", {
+    channel: delivery.channel,
+    to: delivery.to,
+    reason: delivery.reason,
+    sessionKey,
+  });
   const visibility =
     delivery.channel !== "none"
       ? resolveHeartbeatVisibility({
@@ -542,10 +560,24 @@ export async function runHeartbeatOnce(opts: {
   // If so, use a specialized prompt that instructs the model to relay the result
   // instead of the standard heartbeat prompt with "reply HEARTBEAT_OK".
   const isExecEvent = opts.reason === "exec-event";
-  const pendingEvents = isExecEvent ? peekSystemEvents(sessionKey) : [];
+  const isCronPost = typeof opts.reason === "string" && opts.reason.startsWith("cron:");
+  const pendingEvents = isExecEvent || isCronPost ? peekSystemEvents(sessionKey) : [];
   const hasExecCompletion = pendingEvents.some((evt) => evt.includes("Exec finished"));
+  const hasCronCompletion = isCronPost && pendingEvents.length > 0;
+  log.debug("heartbeat event detection", {
+    reason: opts.reason,
+    isExecEvent,
+    isCronPost,
+    pendingEventsCount: pendingEvents.length,
+    hasExecCompletion,
+    hasCronCompletion,
+  });
 
-  const prompt = hasExecCompletion ? EXEC_EVENT_PROMPT : resolveHeartbeatPrompt(cfg, heartbeat);
+  const prompt = hasExecCompletion
+    ? EXEC_EVENT_PROMPT
+    : hasCronCompletion
+      ? CRON_EVENT_PROMPT
+      : resolveHeartbeatPrompt(cfg, heartbeat);
   const ctx = {
     Body: prompt,
     From: sender,
@@ -624,19 +656,28 @@ export async function runHeartbeatOnce(opts: {
 
     const ackMaxChars = resolveHeartbeatAckMaxChars(cfg, heartbeat);
     const normalized = normalizeHeartbeatReply(replyPayload, responsePrefix, ackMaxChars);
-    // For exec completion events, don't skip even if the response looks like HEARTBEAT_OK.
-    // The model should be responding with exec results, not ack tokens.
-    // Also, if normalized.text is empty due to token stripping but we have exec completion,
+    // For exec/cron completion events, don't skip even if the response looks like HEARTBEAT_OK.
+    // The model should be responding with exec/cron results, not ack tokens.
+    // Also, if normalized.text is empty due to token stripping but we have a completion event,
     // fall back to the original reply text.
-    const execFallbackText =
-      hasExecCompletion && !normalized.text.trim() && replyPayload.text?.trim()
+    const hasCompletionEvent = hasExecCompletion || hasCronCompletion;
+    const eventFallbackText =
+      hasCompletionEvent && !normalized.text.trim() && replyPayload.text?.trim()
         ? replyPayload.text.trim()
         : null;
-    if (execFallbackText) {
-      normalized.text = execFallbackText;
+    if (eventFallbackText) {
+      normalized.text = eventFallbackText;
       normalized.shouldSkip = false;
     }
-    const shouldSkipMain = normalized.shouldSkip && !normalized.hasMedia && !hasExecCompletion;
+    const shouldSkipMain = normalized.shouldSkip && !normalized.hasMedia && !hasCompletionEvent;
+    log.debug("heartbeat skip decision", {
+      shouldSkip: normalized.shouldSkip,
+      hasMedia: normalized.hasMedia,
+      hasCompletionEvent,
+      shouldSkipMain,
+      replyTextLength: normalized.text?.length ?? 0,
+      replyTextPreview: normalized.text?.slice(0, 100),
+    });
     if (shouldSkipMain && reasoningPayloads.length === 0) {
       await restoreHeartbeatUpdatedAt({
         storePath,
@@ -747,6 +788,12 @@ export async function runHeartbeatOnce(opts: {
       }
     }
 
+    log.debug("heartbeat delivering", {
+      channel: delivery.channel,
+      to: delivery.to,
+      payloadCount: reasoningPayloads.length + (shouldSkipMain ? 0 : 1),
+      textPreview: shouldSkipMain ? "(skipped)" : normalized.text?.slice(0, 200),
+    });
     await deliverOutboundPayloads({
       cfg,
       channel: delivery.channel,
@@ -765,6 +812,7 @@ export async function runHeartbeatOnce(opts: {
       ],
       deps: opts.deps,
     });
+    log.debug("heartbeat delivered successfully");
 
     // Record last delivered heartbeat payload for dedupe.
     if (!shouldSkipMain && normalized.text.trim()) {
