@@ -7,6 +7,7 @@ import { createDelegateTaskTool } from "./src/tools/delegate-task.js";
 import { createRequestReviewTool } from "./src/tools/request-review.js";
 import { createSubmitResultTool } from "./src/tools/submit-result.js";
 import { createMultiAgentDebateTool } from "./src/tools/multi-agent-debate.js";
+import { createHandoffToAgentTool } from "./src/agent-handoff/tool.js";
 
 /** Resolve a per-agent feature flag from config, falling back to defaults. */
 function resolveAgentFeature(
@@ -57,9 +58,10 @@ const orchestratorPlugin = {
           createSubmitResultTool({ config, sessionKey: ctx.sessionKey }),
           createRequestReviewTool({ config, sessionKey: ctx.sessionKey }),
           createMultiAgentDebateTool({ config, sessionKey: ctx.sessionKey }),
+          createHandoffToAgentTool({ config, sessionKey: ctx.sessionKey }),
         ];
       },
-      { names: ["delegate_task", "check_task_status", "submit_result", "request_review", "multi_agent_debate"] },
+      { names: ["delegate_task", "check_task_status", "submit_result", "request_review", "multi_agent_debate", "handoff_to_agent"] },
     );
 
     // Register tripwire monitor
