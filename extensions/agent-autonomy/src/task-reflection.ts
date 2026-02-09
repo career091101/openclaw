@@ -36,14 +36,7 @@ export function reflectOnTaskResult(input: TaskReflectionInput): TaskReflectionR
   }
 
   // Rule 2: Check for placeholder text
-  const placeholderPatterns = [
-    /TODO/i,
-    /FIXME/i,
-    /\[placeholder\]/i,
-    /\[TBD\]/i,
-    /xxx/i,
-    /\.\.\./,
-  ];
+  const placeholderPatterns = [/TODO/i, /FIXME/i, /\[placeholder\]/i, /\[TBD\]/i, /xxx/i, /\.\.\./];
   for (const pattern of placeholderPatterns) {
     if (pattern.test(input.result)) {
       issues.push(`Result contains placeholder text: ${pattern.toString()}`);
