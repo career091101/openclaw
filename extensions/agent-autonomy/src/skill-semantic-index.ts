@@ -1,13 +1,12 @@
 /**
  * Skill Semantic Indexing Utility
- * 
+ *
  * Provides background indexing and semantic search for agent skills,
  * enabling intelligent skill discovery based on task descriptions.
  */
 
 import path from "node:path";
-import { CONFIG_DIR } from "../../../src/utils.js";
-import { loadWorkspaceSkillEntries } from "../../../src/agents/skills/workspace.js";
+import type { OpenClawConfig } from "../../../src/config/config.js";
 import {
   indexSkills,
   searchSkillsSemantic,
@@ -15,8 +14,9 @@ import {
   recordSkillPattern,
   getRecommendedPatterns,
 } from "../../../src/agents/skills/semantic-clustering.js";
-import type { OpenClawConfig } from "../../../src/config/config.js";
+import { loadWorkspaceSkillEntries } from "../../../src/agents/skills/workspace.js";
 import { createSubsystemLogger } from "../../../src/logging/subsystem.js";
+import { CONFIG_DIR } from "../../../src/utils.js";
 
 const logger = createSubsystemLogger("skill-semantic-index");
 
@@ -38,29 +38,29 @@ export async function indexAllSkills(params: {
   forceReindex?: boolean;
 }): Promise<{ indexed: number; skipped: number; errors: number }> {
   logger.info("Starting skill semantic indexing...");
-  
+
   try {
     const entries = loadWorkspaceSkillEntries(params.workspaceDir, {
       config: params.config,
     });
-    
+
     logger.info(`Found ${entries.length} skills to index`);
-    
+
     const dbPath = getSkillEmbeddingsDbPath();
     const result = await indexSkills({
       entries,
       dbPath,
       forceReindex: params.forceReindex,
     });
-    
+
     logger.info("Skill indexing complete", result);
-    
+
     // Also generate clusters after indexing
     if (result.indexed > 0) {
       const clusters = await clusterSkills({ dbPath });
       logger.info(`Generated ${clusters.length} skill clusters`);
     }
-    
+
     return result;
   } catch (error) {
     logger.error("Failed to index skills", { error });
@@ -77,7 +77,7 @@ export async function findRelevantSkills(params: {
   threshold?: number;
 }): Promise<Array<{ skillName: string; score: number }>> {
   const dbPath = getSkillEmbeddingsDbPath();
-  
+
   try {
     const results = await searchSkillsSemantic({
       query: params.taskDescription,
@@ -85,12 +85,12 @@ export async function findRelevantSkills(params: {
       limit: params.limit ?? 10,
       threshold: params.threshold ?? 0.7,
     });
-    
+
     logger.debug("Found relevant skills", {
       query: params.taskDescription,
       count: results.length,
     });
-    
+
     return results;
   } catch (error) {
     logger.warn("Failed to search skills semantically", { error });
@@ -107,7 +107,7 @@ export async function trackSkillPattern(params: {
   success: boolean;
 }): Promise<void> {
   const dbPath = getSkillEmbeddingsDbPath();
-  
+
   try {
     await recordSkillPattern({
       dbPath,
@@ -115,7 +115,7 @@ export async function trackSkillPattern(params: {
       context: params.context,
       success: params.success,
     });
-    
+
     logger.debug("Recorded skill pattern", {
       skills: params.skills.join(" -> "),
       success: params.success,
@@ -132,17 +132,17 @@ export async function getSkillRecommendations(params?: {
   limit?: number;
 }): Promise<Array<{ sequence: string[]; successRate: number }>> {
   const dbPath = getSkillEmbeddingsDbPath();
-  
+
   try {
     const patterns = await getRecommendedPatterns({
       dbPath,
       limit: params?.limit ?? 5,
     });
-    
+
     logger.debug("Retrieved skill recommendations", {
       count: patterns.length,
     });
-    
+
     return patterns;
   } catch (error) {
     logger.warn("Failed to get skill recommendations", { error });
