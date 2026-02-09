@@ -20,13 +20,17 @@ function createMockCron(
     }),
     update: vi.fn(async (id: string, patch: Record<string, unknown>) => {
       const job = jobs.find((j) => j.id === id);
-      if (!job) throw new Error("Job not found");
+      if (!job) {
+        throw new Error("Job not found");
+      }
       Object.assign(job, patch);
       return job;
     }),
     remove: vi.fn(async (id: string) => {
       const idx = jobs.findIndex((j) => j.id === id);
-      if (idx >= 0) jobs.splice(idx, 1);
+      if (idx >= 0) {
+        jobs.splice(idx, 1);
+      }
       return { removed: idx >= 0 };
     }),
   };

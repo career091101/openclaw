@@ -21,7 +21,9 @@ export function buildAgentMessage(opts: {
   // Configuration
   sections.push("## Run Configuration");
   if (opts.dryRun) {
-    sections.push("- **Mode**: DRY RUN — research and evaluate only, do NOT implement or create PRs");
+    sections.push(
+      "- **Mode**: DRY RUN — research and evaluate only, do NOT implement or create PRs",
+    );
   } else {
     sections.push("- **Mode**: FULL — research, implement, and create PR");
   }
@@ -45,6 +47,8 @@ export function buildAgentMessage(opts: {
     sections.push(`\n## Last Run Summary\n${opts.lastRunSummary}`);
   }
 
-  sections.push("\n---\nBegin the self-improvement workflow now. Start by calling check_improve_status.");
+  sections.push(
+    "\n---\nBegin the self-improvement workflow now. Start by calling check_improve_status.",
+  );
   return sections.join("\n");
 }

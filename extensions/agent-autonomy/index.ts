@@ -60,7 +60,9 @@ const agentAutonomyPlugin = {
           cfg,
           agentId,
         });
-        if (!manager) return [];
+        if (!manager) {
+          return [];
+        }
         const results = await manager.search(query, opts);
         return results ?? [];
       };
