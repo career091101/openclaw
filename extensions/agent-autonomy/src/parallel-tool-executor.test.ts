@@ -21,7 +21,7 @@ describe("groupToolCallsIntoBatches", () => {
     ];
 
     const batches = groupToolCallsIntoBatches(calls);
-    
+
     expect(batches).toHaveLength(1);
     expect(batches[0]).toHaveLength(3);
   });
@@ -34,7 +34,7 @@ describe("groupToolCallsIntoBatches", () => {
     ];
 
     const batches = groupToolCallsIntoBatches(calls);
-    
+
     // [read], [write], [read]
     expect(batches).toHaveLength(3);
     expect(batches[0]).toHaveLength(1);
@@ -52,7 +52,7 @@ describe("groupToolCallsIntoBatches", () => {
     ];
 
     const batches = groupToolCallsIntoBatches(calls);
-    
+
     // Should be separate batches due to dependency
     expect(batches).toHaveLength(2);
   });
@@ -64,8 +64,11 @@ describe("groupToolCallsIntoBatches", () => {
       params: { path: `file${i}.txt` },
     }));
 
-    const batches = groupToolCallsIntoBatches(calls, { ...DEFAULT_PARALLEL_CONFIG, maxParallelism: 3 });
-    
+    const batches = groupToolCallsIntoBatches(calls, {
+      ...DEFAULT_PARALLEL_CONFIG,
+      maxParallelism: 3,
+    });
+
     // Should split into multiple batches of max 3
     expect(batches.length).toBeGreaterThan(1);
     batches.forEach((batch) => {
@@ -86,7 +89,7 @@ describe("groupToolCallsIntoBatches", () => {
     ];
 
     const batches = groupToolCallsIntoBatches(calls);
-    
+
     // [read, read], [write]
     expect(batches).toHaveLength(2);
     expect(batches[0]).toHaveLength(2);
@@ -117,10 +120,10 @@ describe("executeToolCallsInParallel", () => {
     ];
 
     const results = await executeToolCallsInParallel(calls, mockExecutor);
-    
+
     expect(results).toHaveLength(3);
     expect(mockExecutor).toHaveBeenCalledTimes(3);
-    
+
     // All should be called around the same time (order may vary due to Promise.all)
     expect(executionOrder).toHaveLength(3);
   });
@@ -133,7 +136,7 @@ describe("executeToolCallsInParallel", () => {
     ];
 
     const results = await executeToolCallsInParallel(calls, mockExecutor);
-    
+
     // Results should match input order, not execution completion order
     expect(results[0].id).toBe("3");
     expect(results[1].id).toBe("1");
@@ -155,7 +158,7 @@ describe("executeToolCallsInParallel", () => {
     ];
 
     const results = await executeToolCallsInParallel(calls, failingExecutor);
-    
+
     expect(results).toHaveLength(3);
     expect(results[0].error).toBeUndefined();
     expect(results[1].error).toBe("Tool execution failed");
@@ -169,7 +172,7 @@ describe("executeToolCallsInParallel", () => {
     ];
 
     await executeToolCallsInParallel(calls, mockExecutor);
-    
+
     // Writes should be executed sequentially
     expect(executionOrder[0]).toBe("1");
     expect(executionOrder[1]).toBe("2");
@@ -182,12 +185,10 @@ describe("executeToolCallsInParallel", () => {
   });
 
   it("should measure execution time for each tool", async () => {
-    const calls: ToolCall[] = [
-      { id: "1", toolName: "read", params: { path: "file.txt" } },
-    ];
+    const calls: ToolCall[] = [{ id: "1", toolName: "read", params: { path: "file.txt" } }];
 
     const results = await executeToolCallsInParallel(calls, mockExecutor);
-    
+
     expect(results[0].executionTimeMs).toBeGreaterThan(0);
   });
 });
@@ -199,7 +200,7 @@ describe("calculateSpeedup", () => {
       { id: "2", result: {}, executionTimeMs: 100 },
       { id: "3", result: {}, executionTimeMs: 100 },
     ];
-    
+
     const batches = [
       [
         { id: "1", toolName: "read", params: {} },
@@ -209,7 +210,7 @@ describe("calculateSpeedup", () => {
     ];
 
     const stats = calculateSpeedup(results, batches);
-    
+
     expect(stats.sequentialTimeMs).toBe(300);
     expect(stats.parallelTimeMs).toBe(100); // Max of the batch
     expect(stats.speedup).toBeCloseTo(3.0);
@@ -222,19 +223,17 @@ describe("calculateSpeedup", () => {
       { id: "2", result: {}, executionTimeMs: 100 },
       { id: "3", result: {}, executionTimeMs: 50 },
     ];
-    
+
     const batches = [
       [
         { id: "1", toolName: "read", params: {} },
         { id: "2", toolName: "read", params: {} },
       ],
-      [
-        { id: "3", toolName: "write", params: {} },
-      ],
+      [{ id: "3", toolName: "write", params: {} }],
     ];
 
     const stats = calculateSpeedup(results, batches);
-    
+
     expect(stats.sequentialTimeMs).toBe(250);
     expect(stats.parallelTimeMs).toBe(150); // 100 (max of first batch) + 50 (second batch)
     expect(stats.speedup).toBeCloseTo(1.67, 1);
@@ -246,14 +245,14 @@ describe("calculateSpeedup", () => {
       { id: "1", result: {}, executionTimeMs: 100 },
       { id: "2", result: {}, executionTimeMs: 100 },
     ];
-    
+
     const batches = [
       [{ id: "1", toolName: "write", params: {} }],
       [{ id: "2", toolName: "write", params: {} }],
     ];
 
     const stats = calculateSpeedup(results, batches);
-    
+
     expect(stats.sequentialTimeMs).toBe(200);
     expect(stats.parallelTimeMs).toBe(200);
     expect(stats.speedup).toBe(1.0); // No speedup

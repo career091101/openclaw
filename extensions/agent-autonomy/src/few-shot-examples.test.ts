@@ -164,10 +164,7 @@ describe("ToolExampleStore", () => {
       });
     }
 
-    const similar = store.findSimilar(
-      { toolName: "read" },
-      { maxExamples: 3 }
-    );
+    const similar = store.findSimilar({ toolName: "read" }, { maxExamples: 3 });
 
     expect(similar.length).toBe(3);
   });
@@ -194,7 +191,7 @@ describe("ToolExampleStore", () => {
 
     const similar = store.findSimilar(
       { toolName: "read" },
-      { maxAge: 30 * 24 * 60 * 60 * 1000 } // 30 days
+      { maxAge: 30 * 24 * 60 * 60 * 1000 }, // 30 days
     );
 
     expect(similar.length).toBe(1);
@@ -243,7 +240,7 @@ describe("ToolExampleStore", () => {
 
     const similar = store.findSimilar(
       { toolName: "read" },
-      { includeNegativeExamples: true, minSimilarity: 0.3 }
+      { includeNegativeExamples: true, minSimilarity: 0.3 },
     );
 
     expect(similar.length).toBe(2);
@@ -380,12 +377,7 @@ describe("recordToolSuccess and getFewShotExamples integration", () => {
   });
 
   it("should record and retrieve examples", () => {
-    recordToolSuccess(
-      "read",
-      { path: "test.txt" },
-      "test content",
-      "Reading test file"
-    );
+    recordToolSuccess("read", { path: "test.txt" }, "test content", "Reading test file");
 
     const examples = getFewShotExamples("read", { path: "test.txt" });
 
@@ -408,7 +400,7 @@ describe("recordToolSuccess and getFewShotExamples integration", () => {
     const examples = getFewShotExamples(
       "read",
       { path: "completely-different.md" },
-      { minSimilarity: 0.9 } // Very high threshold
+      { minSimilarity: 0.9 }, // Very high threshold
     );
 
     expect(examples).toBe("");

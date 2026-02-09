@@ -3,8 +3,8 @@
  * Triggers a self-improvement run via cron isolated agent.
  */
 
-import { loadTips } from "../store.js";
 import { buildAgentMessage } from "../context-bridge.js";
+import { loadTips } from "../store.js";
 
 type RespondFn = (success: boolean, data?: unknown, error?: unknown) => void;
 

@@ -1,7 +1,7 @@
 /**
  * Continuous Autonomy Loop: Wraps agent execution with verification and retry logic.
  * Inspired by the "Ralph Wiggum technique" - keeps running until the task is actually complete.
- * 
+ *
  * Pattern: Instead of executing once and stopping, this creates an outer loop that:
  * 1. Executes the agent/tool loop
  * 2. Verifies if the task is actually complete
@@ -198,9 +198,7 @@ export async function continuousLoop<T = unknown>(
       }
 
       // Not complete - prepare feedback for next iteration
-      feedback = verification.reason
-        ? `[Verification feedback] ${verification.reason}`
-        : undefined;
+      feedback = verification.reason ? `[Verification feedback] ${verification.reason}` : undefined;
     } else {
       // No verification function - complete after first iteration
       return {

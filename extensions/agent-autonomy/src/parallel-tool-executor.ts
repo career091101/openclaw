@@ -1,11 +1,11 @@
 /**
  * Parallel Tool Execution: Execute independent tool calls simultaneously.
- * 
+ *
  * Benefits:
  * - Dramatically reduces total execution time for multi-tool workflows
  * - Improves agent responsiveness
  * - Better resource utilization
- * 
+ *
  * Strategy:
  * - Analyze tool call dependencies
  * - Group independent tools into parallel batches
@@ -60,7 +60,7 @@ export const DEFAULT_PARALLEL_CONFIG: ParallelExecutionConfig = {
  */
 function hasDependency(toolCall: ToolCall, previousCalls: ToolCall[]): boolean {
   const paramStr = JSON.stringify(toolCall.params);
-  
+
   for (const prevCall of previousCalls) {
     // Check if this tool's params reference the previous tool's ID
     // This catches patterns like: { file: "$tool_abc123.result" }
@@ -68,7 +68,7 @@ function hasDependency(toolCall: ToolCall, previousCalls: ToolCall[]): boolean {
       return true;
     }
   }
-  
+
   return false;
 }
 
@@ -94,14 +94,14 @@ export function groupToolCallsIntoBatches(
   for (const toolCall of toolCalls) {
     const mustBeSequential = isSequentialTool(toolCall.toolName, config);
     const hasDeps = config.detectDependencies && hasDependency(toolCall, processedCalls);
-    
+
     if (mustBeSequential || hasDeps || currentBatch.length >= config.maxParallelism) {
       // Flush current batch and start new one
       if (currentBatch.length > 0) {
         batches.push(currentBatch);
         currentBatch = [];
       }
-      
+
       // Sequential tools go in their own batch
       if (mustBeSequential || hasDeps) {
         batches.push([toolCall]);
@@ -112,7 +112,7 @@ export function groupToolCallsIntoBatches(
       // Add to current parallel batch
       currentBatch.push(toolCall);
     }
-    
+
     processedCalls.push(toolCall);
   }
 
@@ -127,10 +127,7 @@ export function groupToolCallsIntoBatches(
 /**
  * Execute a batch of tool calls in parallel.
  */
-async function executeBatch(
-  batch: ToolCall[],
-  executor: ToolExecutor,
-): Promise<ToolResult[]> {
+async function executeBatch(batch: ToolCall[], executor: ToolExecutor): Promise<ToolResult[]> {
   const promises = batch.map(async (toolCall) => {
     const callStartTime = Date.now();
     try {
@@ -155,7 +152,7 @@ async function executeBatch(
 
 /**
  * Execute tool calls with automatic parallelization of independent operations.
- * 
+ *
  * @param toolCalls - Array of tool calls to execute
  * @param executor - Function that executes a single tool call
  * @param config - Parallel execution configuration
@@ -175,7 +172,7 @@ export async function executeToolCallsInParallel(
 
   // Execute batches sequentially, but tools within each batch in parallel
   const allResults: ToolResult[] = [];
-  
+
   for (const batch of batches) {
     const batchResults = await executeBatch(batch, executor);
     allResults.push(...batchResults);
@@ -197,7 +194,7 @@ export function calculateSpeedup(
   parallelizationRatio: number;
 } {
   const sequentialTimeMs = results.reduce((sum, r) => sum + r.executionTimeMs, 0);
-  
+
   // Parallel time is the sum of the slowest tool in each batch
   const parallelTimeMs = batches.reduce((sum, batch) => {
     const batchIds = new Set(batch.map((t) => t.id));

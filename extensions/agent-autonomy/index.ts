@@ -1,11 +1,11 @@
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
 import { emptyPluginConfigSchema } from "openclaw/plugin-sdk";
 import type { MemorySearchFn } from "./src/jit-context.js";
+import { recordToolSuccess } from "./src/few-shot-examples.js";
 import { createJitContextInjector } from "./src/jit-context.js";
 import { createRetryWrapper } from "./src/retry-wrapper.js";
 import { createStructuredCompaction } from "./src/structured-compaction.js";
 import { createToolResultValidator } from "./src/tool-result-validator.js";
-import { recordToolSuccess } from "./src/few-shot-examples.js";
 
 // Export continuous loop utilities for programmatic use
 export {
@@ -69,7 +69,7 @@ const agentAutonomyPlugin = {
     const validator = createToolResultValidator();
     api.on("after_tool_call", async (_ctx, event) => {
       validator.validate(event);
-      
+
       // Auto-record successful tool calls for few-shot learning
       if (event.result && !event.error) {
         recordToolSuccess(

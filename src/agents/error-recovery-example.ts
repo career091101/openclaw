@@ -1,6 +1,6 @@
 /**
  * error-recovery-example.ts
- * 
+ *
  * Example usage of the error recovery utility in agent operations
  */
 
@@ -8,10 +8,10 @@ import {
   withErrorRecovery,
   createResilientOperation,
   type ErrorRecoveryConfig,
-} from './error-recovery.js';
+} from "./error-recovery.js";
 
 // Example 1: Wrap a network API call with automatic retry
-export async function fetchDataWithRetry(url: string): Promise<any> {
+export async function fetchDataWithRetry(url: string): Promise<unknown> {
   return withErrorRecovery(
     async () => {
       const response = await fetch(url);
@@ -25,7 +25,7 @@ export async function fetchDataWithRetry(url: string): Promise<any> {
       initialDelayMs: 1000,
       backoffMultiplier: 2,
     },
-    `fetch-${url}`
+    `fetch-${url}`,
   );
 }
 
@@ -39,13 +39,13 @@ export const resilientFetch = createResilientOperation(
     return response.json();
   },
   { maxRetries: 3 },
-  'resilient-fetch'
+  "resilient-fetch",
 );
 
 // Example 3: Wrap external tool calls with custom configuration
 export async function callExternalToolWithRecovery<T>(
   toolFn: () => Promise<T>,
-  toolName: string
+  toolName: string,
 ): Promise<T> {
   const config: Partial<ErrorRecoveryConfig> = {
     maxRetries: 5,
@@ -59,7 +59,7 @@ export async function callExternalToolWithRecovery<T>(
 
 // Example 4: Usage in agent task execution
 export class ResilientAgentTask {
-  async execute(taskFn: () => Promise<any>): Promise<any> {
+  async execute(taskFn: () => Promise<unknown>): Promise<unknown> {
     try {
       return await withErrorRecovery(
         taskFn,
@@ -67,11 +67,11 @@ export class ResilientAgentTask {
           maxRetries: 3,
           circuitBreakerThreshold: 5,
         },
-        'agent-task'
+        "agent-task",
       );
     } catch (error) {
       // Handle final failure after all retries exhausted
-      console.error('Agent task failed after recovery attempts:', error);
+      console.error("Agent task failed after recovery attempts:", error);
       throw error;
     }
   }
@@ -79,9 +79,9 @@ export class ResilientAgentTask {
 
 /**
  * Example: Integrate with OpenClaw's agent execution flow
- * 
+ *
  * Usage in agent loops:
- * 
+ *
  * ```typescript
  * const result = await withErrorRecovery(
  *   () => executeTool(toolName, args),
@@ -89,9 +89,9 @@ export class ResilientAgentTask {
  *   `tool-${toolName}`
  * );
  * ```
- * 
+ *
  * Or create pre-configured resilient versions:
- * 
+ *
  * ```typescript
  * const resilientReadFile = createResilientOperation(readFile, { maxRetries: 3 });
  * const resilientExec = createResilientOperation(execCommand, { maxRetries: 5 });
