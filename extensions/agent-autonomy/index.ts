@@ -1,6 +1,7 @@
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
 import { emptyPluginConfigSchema } from "openclaw/plugin-sdk";
 import type { MemorySearchFn } from "./src/jit-context.js";
+import { createConfidenceEscalation } from "./src/confidence-escalation.js";
 import { recordToolSuccess } from "./src/few-shot-examples.js";
 import { createJitContextInjector } from "./src/jit-context.js";
 import { createRetryWrapper } from "./src/retry-wrapper.js";
@@ -33,6 +34,14 @@ export {
   type FewShotConfig,
   type SimilarityMetric,
 } from "./src/few-shot-examples.js";
+
+// Export confidence escalation utilities for programmatic use
+export {
+  createConfidenceEscalation,
+  type ConfidenceEscalation,
+  type ConfidenceScore,
+  type ConfidenceState,
+} from "./src/confidence-escalation.js";
 
 const agentAutonomyPlugin = {
   id: "agent-autonomy",
@@ -67,8 +76,20 @@ const agentAutonomyPlugin = {
 
     // Register tool result validation hook
     const validator = createToolResultValidator();
-    api.on("after_tool_call", async (_ctx, event) => {
-      validator.validate(event);
+    const confidenceEscalation = createConfidenceEscalation();
+
+    api.on("after_tool_call", async (ctx, event) => {
+      const validationResult = validator.validate(event);
+
+      // Record confidence score for escalation tracking
+      if (validationResult) {
+        confidenceEscalation.recordConfidence({
+          toolName: event.toolName,
+          toolCallId: event.toolCallId ?? `${event.toolName}_${Date.now()}`,
+          confidence: validationResult.confidence,
+          sessionKey: ctx.sessionKey,
+        });
+      }
 
       // Auto-record successful tool calls for few-shot learning
       if (event.result && !event.error) {
@@ -83,8 +104,18 @@ const agentAutonomyPlugin = {
 
     // Register retry context injection hook
     const retryWrapper = createRetryWrapper();
-    api.on("before_agent_start", async () => {
-      return retryWrapper.injectRetryContext();
+    api.on("before_agent_start", async (ctx) => {
+      const retryContext = retryWrapper.injectRetryContext();
+      const escalationWarning = confidenceEscalation.injectEscalationWarning(ctx.sessionKey);
+
+      // Combine contexts if both exist
+      if (retryContext && escalationWarning) {
+        return {
+          prependContext: retryContext.prependContext + escalationWarning.prependContext,
+        };
+      }
+
+      return retryContext ?? escalationWarning;
     });
 
     // Register JIT context injection hook
