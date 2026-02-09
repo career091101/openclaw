@@ -1,0 +1,17 @@
+{
+  "name": "@openclaw/self-improve",
+  "version": "2026.2.8",
+  "description": "OpenClaw self-improvement loop: automated research, evaluation, implementation, and PR creation for autonomy tips",
+  "type": "module",
+  "devDependencies": {
+    "openclaw": "workspace:*"
+  },
+  "peerDependencies": {
+    "openclaw": ">=2026.1.26"
+  },
+  "openclaw": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}

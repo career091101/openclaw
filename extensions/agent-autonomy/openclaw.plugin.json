@@ -1,0 +1,10 @@
+{
+  "id": "agent-autonomy",
+  "name": "Agent Autonomy",
+  "description": "Memory write-back, self-correction, structured compaction, and JIT context for enhanced agent autonomy",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {}
+  }
+}

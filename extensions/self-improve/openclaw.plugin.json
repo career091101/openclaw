@@ -1,0 +1,10 @@
+{
+  "id": "self-improve",
+  "name": "Self-Improve",
+  "description": "Automated self-improvement loop: research, evaluate, implement, and PR autonomy tips",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {}
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "id": "orchestrator",
+  "name": "Orchestrator",
+  "description": "Multi-agent orchestration with supervisor, task graph, progressive autonomy, and observability",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {}
+  }
+}
