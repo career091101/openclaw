@@ -94,3 +94,16 @@ export type ToolAnalyticsSnapshot = {
   generatedAt: number;
   tools: Record<string, ToolAnalytics>;
 };
+
+export type ConfidenceScore = {
+  toolName: string;
+  toolCallId: string;
+  confidence: number;
+  timestamp: number;
+  sessionKey: string;
+};
+
+export type ConfidenceEscalationConfig = {
+  threshold?: number;
+  windowSize?: number;
+};
