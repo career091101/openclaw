@@ -6,6 +6,13 @@ import { createRetryWrapper } from "./src/retry-wrapper.js";
 import { createStructuredCompaction } from "./src/structured-compaction.js";
 import { createToolResultValidator } from "./src/tool-result-validator.js";
 
+// Tool rehearsal module is available but not yet integrated into the plugin hooks
+// import {
+//   rehearseToolOperation,
+//   isDestructiveOperation,
+//   formatRehearsalSummary,
+// } from "./src/tool-rehearsal.js";
+
 const agentAutonomyPlugin = {
   id: "agent-autonomy",
   name: "Agent Autonomy",
@@ -60,7 +67,9 @@ const agentAutonomyPlugin = {
           cfg,
           agentId,
         });
-        if (!manager) return [];
+        if (!manager) {
+          return [];
+        }
         const results = await manager.search(query, opts);
         return results ?? [];
       };
