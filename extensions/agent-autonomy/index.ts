@@ -2,12 +2,12 @@ import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
 import { emptyPluginConfigSchema } from "openclaw/plugin-sdk";
 import type { MemorySearchFn } from "./src/jit-context.js";
 import { classifyError } from "./src/error-classifier.js";
+import { recordToolSuccess } from "./src/few-shot-examples.js";
 import { createJitContextInjector } from "./src/jit-context.js";
 import { createRetryWrapper } from "./src/retry-wrapper.js";
 import { createStructuredCompaction } from "./src/structured-compaction.js";
 import { createToolAnalyticsTracker } from "./src/tool-analytics.js";
 import { createToolResultValidator } from "./src/tool-result-validator.js";
-import { recordToolSuccess } from "./src/few-shot-examples.js";
 
 // Tool rehearsal module is available but not yet integrated into the plugin hooks
 // import {
@@ -98,7 +98,7 @@ const agentAutonomyPlugin = {
 
       // Validate
       validator.validate(event);
-      
+
       // Auto-record successful tool calls for few-shot learning
       if (event.result && !event.error) {
         recordToolSuccess(

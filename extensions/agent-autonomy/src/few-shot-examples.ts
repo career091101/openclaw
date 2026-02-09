@@ -1,6 +1,6 @@
 /**
  * Dynamic Few-Shot Example Injection: Meta-prompting with relevant past tool successes
- * 
+ *
  * Retrieves similar successful tool calls from history and injects them as examples
  * to improve tool use accuracy.
  */
@@ -17,21 +17,18 @@ export type ToolCallExample = {
 export type FewShotConfig = {
   /** Maximum number of examples to inject (default: 3) */
   maxExamples?: number;
-  
+
   /** Minimum similarity score to include example (0-1, default: 0.5) */
   minSimilarity?: number;
-  
+
   /** Maximum age of examples in milliseconds (default: 30 days) */
   maxAge?: number;
-  
+
   /** Whether to include failed examples as negative demonstrations (default: false) */
   includeNegativeExamples?: boolean;
 };
 
-export type SimilarityMetric = (
-  a: ToolCallExample,
-  b: Partial<ToolCallExample>
-) => number;
+export type SimilarityMetric = (a: ToolCallExample, b: Partial<ToolCallExample>) => number;
 
 /**
  * Calculate similarity between two tool calls based on tool name and parameter structure.
@@ -58,9 +55,7 @@ export function calculateToolSimilarity(
   const exampleKeys = new Set(Object.keys(exampleParams));
   const queryKeys = new Set(Object.keys(queryParams));
 
-  const intersection = new Set(
-    [...exampleKeys].filter((k) => queryKeys.has(k))
-  );
+  const intersection = new Set([...exampleKeys].filter((k) => queryKeys.has(k)));
   const union = new Set([...exampleKeys, ...queryKeys]);
 
   const keyOverlap = intersection.size / union.size;
@@ -75,19 +70,10 @@ export function calculateToolSimilarity(
 
     if (exampleValue === queryValue) {
       valueSimilarity += 1;
-    } else if (
-      typeof exampleValue === typeof queryValue &&
-      typeof exampleValue === "string"
-    ) {
+    } else if (typeof exampleValue === typeof queryValue && typeof exampleValue === "string") {
       // Partial string match using Levenshtein-like score
-      const shorter = Math.min(
-        String(exampleValue).length,
-        String(queryValue).length
-      );
-      const longer = Math.max(
-        String(exampleValue).length,
-        String(queryValue).length
-      );
+      const shorter = Math.min(String(exampleValue).length, String(queryValue).length);
+      const longer = Math.max(String(exampleValue).length, String(queryValue).length);
       if (shorter > 0) {
         valueSimilarity += shorter / longer;
       }
@@ -95,8 +81,7 @@ export function calculateToolSimilarity(
     comparedValues++;
   }
 
-  const avgValueSimilarity =
-    comparedValues > 0 ? valueSimilarity / comparedValues : 0;
+  const avgValueSimilarity = comparedValues > 0 ? valueSimilarity / comparedValues : 0;
 
   // Weighted combination: 60% key overlap, 40% value similarity
   return keyOverlap * 0.6 + avgValueSimilarity * 0.4;
@@ -175,9 +160,7 @@ export class ToolExampleStore {
    * Get all successful examples for a specific tool
    */
   getSuccessfulForTool(toolName: string): ToolCallExample[] {
-    return this.examples.filter(
-      (ex) => ex.toolName === toolName && ex.success
-    );
+    return this.examples.filter((ex) => ex.toolName === toolName && ex.success);
   }
 
   /**
@@ -206,11 +189,7 @@ export function formatExamplesForPrompt(
     return "";
   }
 
-  const lines: string[] = [
-    "",
-    "Here are some examples of successful uses of this tool:",
-    "",
-  ];
+  const lines: string[] = ["", "Here are some examples of successful uses of this tool:", ""];
 
   for (let i = 0; i < examples.length; i++) {
     const ex = examples[i];
@@ -221,9 +200,7 @@ export function formatExamplesForPrompt(
         lines.push(`  <tool>${ex.toolName}</tool>`);
         lines.push(`  <parameters>`);
         for (const [key, value] of Object.entries(ex.parameters)) {
-          lines.push(
-            `    <${key}>${JSON.stringify(value)}</${key}>`
-          );
+          lines.push(`    <${key}>${JSON.stringify(value)}</${key}>`);
         }
         lines.push(`  </parameters>`);
         if (ex.context) {
@@ -243,8 +220,8 @@ export function formatExamplesForPrompt(
               context: ex.context,
             },
             null,
-            2
-          )
+            2,
+          ),
         );
         lines.push("```");
         break;
@@ -309,9 +286,6 @@ export function getFewShotExamples(
   config?: FewShotConfig,
 ): string {
   const store = getGlobalToolExampleStore();
-  const examples = store.findSimilar(
-    { toolName, parameters },
-    config
-  );
+  const examples = store.findSimilar({ toolName, parameters }, config);
   return formatExamplesForPrompt(examples, "xml");
 }

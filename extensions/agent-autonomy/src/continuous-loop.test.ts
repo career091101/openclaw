@@ -178,9 +178,11 @@ describe("stop conditions", () => {
   });
 
   it("should stop when token count exceeded", async () => {
-    const execute: ExecuteFunction<{ usage: { total_tokens: number } }> = vi.fn().mockResolvedValue({
-      usage: { total_tokens: 1000 },
-    });
+    const execute: ExecuteFunction<{ usage: { total_tokens: number } }> = vi
+      .fn()
+      .mockResolvedValue({
+        usage: { total_tokens: 1000 },
+      });
     const verify = vi.fn().mockResolvedValue({ complete: false });
 
     const result = await continuousLoop(execute, "test", {

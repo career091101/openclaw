@@ -1,11 +1,11 @@
 /**
  * Tool Result Caching: Cache deterministic tool results to improve autonomy.
- * 
+ *
  * Benefits:
  * - Reduces redundant API calls (faster, cheaper)
  * - Enables offline operation for cached data
  * - Improves agent responsiveness
- * 
+ *
  * Strategy:
  * - Content-based hashing (tool name + params)
  * - Configurable TTL per tool type
@@ -74,11 +74,14 @@ export class ToolResultCache {
     // Sort params keys for consistent hashing
     const sortedParams = Object.keys(params)
       .toSorted()
-      .reduce((acc, key) => {
-        acc[key] = params[key];
-        return acc;
-      }, {} as Record<string, unknown>);
-    
+      .reduce(
+        (acc, key) => {
+          acc[key] = params[key];
+          return acc;
+        },
+        {} as Record<string, unknown>,
+      );
+
     const normalized = JSON.stringify({ tool: toolName, params: sortedParams });
     return createHash("sha256").update(normalized).digest("hex").slice(0, 16);
   }

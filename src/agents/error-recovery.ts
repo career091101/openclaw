@@ -1,6 +1,6 @@
 /**
  * error-recovery.ts
- * 
+ *
  * Structured error recovery system for agent tasks with exponential backoff,
  * circuit breakers, and error classification to improve autonomous resilience.
  */
@@ -24,9 +24,9 @@ export const DEFAULT_CONFIG: ErrorRecoveryConfig = {
 };
 
 export enum ErrorType {
-  TRANSIENT = 'transient', // Retryable (network, rate limit, timeout)
-  PERMANENT = 'permanent',  // Non-retryable (auth error, not found, validation)
-  UNKNOWN = 'unknown',      // Unclear - default to transient with caution
+  TRANSIENT = "transient", // Retryable (network, rate limit, timeout)
+  PERMANENT = "permanent", // Non-retryable (auth error, not found, validation)
+  UNKNOWN = "unknown", // Unclear - default to transient with caution
 }
 
 export interface ErrorContext {
@@ -41,32 +41,32 @@ export interface ErrorContext {
 class CircuitBreaker {
   private failures = 0;
   private lastFailureTime = 0;
-  private state: 'closed' | 'open' | 'half-open' = 'closed';
+  private state: "closed" | "open" | "half-open" = "closed";
 
   constructor(
     private threshold: number,
-    private resetMs: number
+    private resetMs: number,
   ) {}
 
   recordSuccess(): void {
     this.failures = 0;
-    this.state = 'closed';
+    this.state = "closed";
   }
 
   recordFailure(): void {
     this.failures++;
     this.lastFailureTime = Date.now();
-    
+
     if (this.failures >= this.threshold) {
-      this.state = 'open';
+      this.state = "open";
     }
   }
 
   isOpen(): boolean {
-    if (this.state === 'open') {
+    if (this.state === "open") {
       const elapsed = Date.now() - this.lastFailureTime;
       if (elapsed >= this.resetMs) {
-        this.state = 'half-open';
+        this.state = "half-open";
         this.failures = 0;
         return false;
       }
@@ -84,38 +84,41 @@ class CircuitBreaker {
  * Classify an error to determine if it's retryable
  */
 export function classifyError(error: unknown): ErrorType {
-  if (!error) return ErrorType.UNKNOWN;
+  if (!error) {
+    return ErrorType.UNKNOWN;
+  }
 
-  const errorMsg = error instanceof Error ? error.message : String(error);
+  const errorMsg =
+    error instanceof Error ? error.message : typeof error === "string" ? error : "Unknown error";
   const lowerMsg = errorMsg.toLowerCase();
 
   // Transient errors (retryable)
   if (
-    lowerMsg.includes('timeout') ||
-    lowerMsg.includes('econnreset') ||
-    lowerMsg.includes('econnrefused') ||
-    lowerMsg.includes('enetunreach') ||
-    lowerMsg.includes('rate limit') ||
-    lowerMsg.includes('too many requests') ||
-    lowerMsg.includes('503') ||
-    lowerMsg.includes('504') ||
-    lowerMsg.includes('temporary') ||
-    lowerMsg.includes('throttle')
+    lowerMsg.includes("timeout") ||
+    lowerMsg.includes("econnreset") ||
+    lowerMsg.includes("econnrefused") ||
+    lowerMsg.includes("enetunreach") ||
+    lowerMsg.includes("rate limit") ||
+    lowerMsg.includes("too many requests") ||
+    lowerMsg.includes("503") ||
+    lowerMsg.includes("504") ||
+    lowerMsg.includes("temporary") ||
+    lowerMsg.includes("throttle")
   ) {
     return ErrorType.TRANSIENT;
   }
 
   // Permanent errors (non-retryable)
   if (
-    lowerMsg.includes('unauthorized') ||
-    lowerMsg.includes('forbidden') ||
-    lowerMsg.includes('not found') ||
-    lowerMsg.includes('invalid') ||
-    lowerMsg.includes('400') ||
-    lowerMsg.includes('401') ||
-    lowerMsg.includes('403') ||
-    lowerMsg.includes('404') ||
-    lowerMsg.includes('validation')
+    lowerMsg.includes("unauthorized") ||
+    lowerMsg.includes("forbidden") ||
+    lowerMsg.includes("not found") ||
+    lowerMsg.includes("invalid") ||
+    lowerMsg.includes("400") ||
+    lowerMsg.includes("401") ||
+    lowerMsg.includes("403") ||
+    lowerMsg.includes("404") ||
+    lowerMsg.includes("validation")
   ) {
     return ErrorType.PERMANENT;
   }
@@ -126,15 +129,12 @@ export function classifyError(error: unknown): ErrorType {
 /**
  * Calculate delay for exponential backoff
  */
-function calculateBackoffDelay(
-  attemptNumber: number,
-  config: ErrorRecoveryConfig
-): number {
+function calculateBackoffDelay(attemptNumber: number, config: ErrorRecoveryConfig): number {
   const delay = Math.min(
     config.initialDelayMs * Math.pow(config.backoffMultiplier, attemptNumber),
-    config.maxDelayMs
+    config.maxDelayMs,
   );
-  
+
   // Add jitter (±20%)
   const jitter = delay * 0.2 * (Math.random() * 2 - 1);
   return Math.floor(delay + jitter);
@@ -147,12 +147,12 @@ function calculateBackoffDelay(
 export async function withErrorRecovery<T>(
   operation: () => Promise<T>,
   options: Partial<ErrorRecoveryConfig> = {},
-  operationName = 'operation'
+  operationName = "operation",
 ): Promise<T> {
   const config = { ...DEFAULT_CONFIG, ...options };
   const circuitBreaker = new CircuitBreaker(
     config.circuitBreakerThreshold,
-    config.circuitBreakerResetMs
+    config.circuitBreakerResetMs,
   );
 
   let lastError: unknown;
@@ -161,7 +161,7 @@ export async function withErrorRecovery<T>(
     // Check circuit breaker
     if (circuitBreaker.isOpen()) {
       const error = new Error(
-        `Circuit breaker open for ${operationName} after ${config.circuitBreakerThreshold} failures`
+        `Circuit breaker open for ${operationName} after ${config.circuitBreakerThreshold} failures`,
       );
       throw error;
     }
@@ -176,7 +176,12 @@ export async function withErrorRecovery<T>(
 
       const context: ErrorContext = {
         type: errorType,
-        message: error instanceof Error ? error.message : String(error),
+        message:
+          error instanceof Error
+            ? error.message
+            : typeof error === "string"
+              ? error
+              : "Unknown error",
         originalError: error,
         attemptNumber: attempt + 1,
         totalAttempts: config.maxRetries,
@@ -185,16 +190,17 @@ export async function withErrorRecovery<T>(
       // Don't retry permanent errors
       if (errorType === ErrorType.PERMANENT) {
         circuitBreaker.recordFailure();
-        throw new Error(
-          `Permanent error in ${operationName}: ${context.message}`
-        );
+        throw new Error(`Permanent error in ${operationName}: ${context.message}`, {
+          cause: error,
+        });
       }
 
       // Last attempt - don't wait, just throw
       if (attempt === config.maxRetries - 1) {
         circuitBreaker.recordFailure();
         throw new Error(
-          `Operation ${operationName} failed after ${config.maxRetries} attempts: ${context.message}`
+          `Operation ${operationName} failed after ${config.maxRetries} attempts: ${context.message}`,
+          { cause: error },
         );
       }
 
@@ -203,7 +209,7 @@ export async function withErrorRecovery<T>(
       context.nextRetryDelayMs = delay;
 
       console.warn(
-        `[ErrorRecovery] ${operationName} attempt ${attempt + 1}/${config.maxRetries} failed (${errorType}): ${context.message}. Retrying in ${delay}ms...`
+        `[ErrorRecovery] ${operationName} attempt ${attempt + 1}/${config.maxRetries} failed (${errorType}): ${context.message}. Retrying in ${delay}ms...`,
       );
 
       await new Promise((resolve) => setTimeout(resolve, delay));
@@ -211,26 +217,28 @@ export async function withErrorRecovery<T>(
   }
 
   circuitBreaker.recordFailure();
-  throw new Error(
-    `Operation ${operationName} exhausted all retries: ${lastError}`
-  );
+  const errorMsg =
+    lastError instanceof Error
+      ? lastError.message
+      : typeof lastError === "string"
+        ? lastError
+        : "Unknown error";
+  throw new Error(`Operation ${operationName} exhausted all retries: ${errorMsg}`, {
+    cause: lastError,
+  });
 }
 
 /**
  * Create a wrapped version of an async function with built-in error recovery
  */
-export function createResilientOperation<T extends (...args: any[]) => Promise<any>>(
+export function createResilientOperation<T extends (...args: never[]) => Promise<unknown>>(
   fn: T,
   config: Partial<ErrorRecoveryConfig> = {},
-  name?: string
+  name?: string,
 ): T {
-  const operationName = name || fn.name || 'anonymous';
-  
+  const operationName = name || fn.name || "anonymous";
+
   return ((...args: Parameters<T>) => {
-    return withErrorRecovery(
-      () => fn(...args),
-      config,
-      operationName
-    );
+    return withErrorRecovery(() => fn(...args), config, operationName);
   }) as T;
 }
