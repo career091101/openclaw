@@ -24,6 +24,7 @@ A registry of available specialist agents with their capabilities:
 ```
 
 Default specialists:
+
 - **code-specialist**: Programming, debugging, architecture
 - **research-specialist**: Web research, information gathering
 - **data-specialist**: Data analysis, statistics, visualization
@@ -61,8 +62,8 @@ handoff_to_agent({
   targetAgentId: "code-specialist",
   task: "Review this TypeScript code for type safety issues: ...",
   reason: "I need expert code review",
-  strategy: "wait-for-completion"
-})
+  strategy: "wait-for-completion",
+});
 ```
 
 ### Auto-Select Best Agent
@@ -73,8 +74,8 @@ handoff_to_agent({
   autoSelect: true,
   task: "Research the latest LLM architectures and summarize findings",
   reason: "Need research capabilities",
-  strategy: "wait-for-completion"
-})
+  strategy: "wait-for-completion",
+});
 ```
 
 ### Shared State Across Handoffs
@@ -87,10 +88,10 @@ handoff_to_agent({
   reason: "Need research on testing options",
   sharedState: {
     project: "my-app",
-    language: "TypeScript"
+    language: "TypeScript",
   },
-  strategy: "wait-for-completion"
-})
+  strategy: "wait-for-completion",
+});
 
 // Second handoff: code implementation (can access shared state)
 handoff_to_agent({
@@ -100,22 +101,22 @@ handoff_to_agent({
   sharedState: {
     project: "my-app",
     language: "TypeScript",
-    frameworks: ["vitest", "jest", "ava"]
-  }
-})
+    frameworks: ["vitest", "jest", "ava"],
+  },
+});
 ```
 
 ## Architecture
 
 ### vs. delegate_task (Orchestration)
 
-| Feature | delegate_task | handoff_to_agent |
-|---------|---------------|------------------|
-| Structure | Hierarchical (supervisor → workers) | Peer-to-peer |
-| Use case | Complex multi-step workflows | Single specialist consultation |
-| Context | Task graph with dependencies | Flat handoff chain |
-| Return | Task result via submit_result | Direct return value |
-| State | Graph-level state | Shared context object |
+| Feature   | delegate_task                       | handoff_to_agent               |
+| --------- | ----------------------------------- | ------------------------------ |
+| Structure | Hierarchical (supervisor → workers) | Peer-to-peer                   |
+| Use case  | Complex multi-step workflows        | Single specialist consultation |
+| Context   | Task graph with dependencies        | Flat handoff chain             |
+| Return    | Task result via submit_result       | Direct return value            |
+| State     | Graph-level state                   | Shared context object          |
 
 **When to use delegate_task**: Multi-step workflows with dependencies (e.g., plan → execute → review)
 
@@ -159,7 +160,7 @@ registerAgent({
   description: "Expert in security audits and vulnerability detection",
   tags: ["security", "audit", "vulnerability", "penetration"],
   toolGroups: ["filesystem", "exec"],
-  systemPrompt: "You are a security specialist. Focus on identifying vulnerabilities..."
+  systemPrompt: "You are a security specialist. Focus on identifying vulnerabilities...",
 });
 ```
 
@@ -184,6 +185,7 @@ npm test extensions/orchestrator/src/agent-handoff
 ```
 
 Key test files:
+
 - `registry.test.ts`: Agent registration and discovery
 - `executor.test.ts`: Handoff context management
 

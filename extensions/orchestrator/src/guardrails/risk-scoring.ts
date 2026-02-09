@@ -202,9 +202,7 @@ function isSystemPath(path: string): boolean {
 function isWorkspacePath(path: string): boolean {
   // Assume workspace paths are relative or start with known workspace dirs
   return (
-    !path.startsWith("/") ||
-    path.includes("/workspace/") ||
-    path.includes("/.openclaw/workspace/")
+    !path.startsWith("/") || path.includes("/workspace/") || path.includes("/.openclaw/workspace/")
   );
 }
 

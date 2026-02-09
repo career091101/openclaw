@@ -3,9 +3,9 @@
  * Simulates operations before execution to catch potential issues.
  */
 
-import type { ValidationResult } from "./types.js";
-import path from "node:path";
 import { existsSync, statSync } from "node:fs";
+import path from "node:path";
+import type { ValidationResult } from "./types.js";
 
 export type ToolRehearsalInput = {
   toolName: string;
@@ -98,7 +98,9 @@ export function rehearseToolOperation(input: ToolRehearsalInput): ToolRehearsalR
           warnings.push(
             `Overwriting existing file (${Math.round(stats.size / 1024)}KB): ${path.basename(filePath)}`,
           );
-          saferAlternatives.push("Use 'edit' tool to modify specific sections instead of full overwrite");
+          saferAlternatives.push(
+            "Use 'edit' tool to modify specific sections instead of full overwrite",
+          );
           // Only set to medium if not already higher
           if (destructiveLevel === "none" || destructiveLevel === "low") {
             destructiveLevel = "medium";

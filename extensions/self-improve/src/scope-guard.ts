@@ -15,13 +15,7 @@ const ALLOWED_PATHS = [
   "scripts/",
 ];
 
-const FORBIDDEN_PATHS = [
-  "src/gateway/server",
-  "package.json",
-  ".github/",
-  "node_modules/",
-  ".env",
-];
+const FORBIDDEN_PATHS = ["src/gateway/server", "package.json", ".github/", "node_modules/", ".env"];
 
 const COMMAND_SEPARATORS = /(?:&&|\|\||;|\n)/;
 const ENV_ASSIGNMENT = /^[a-z_][a-z0-9_]*=.*/;
@@ -77,10 +71,7 @@ export function isAllowedCommand(command: string): boolean {
 }
 
 function tokenizeCommandSegment(segment: string): string[] {
-  return segment
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean);
+  return segment.trim().split(/\s+/).filter(Boolean);
 }
 
 function stripLeadingEnvAssignments(tokens: string[]): string[] {

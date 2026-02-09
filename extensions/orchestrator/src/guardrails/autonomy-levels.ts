@@ -144,14 +144,7 @@ export function checkAutonomyWithRisk(params: {
   target?: string;
   cost?: number;
 }): AutonomyDecision {
-  const {
-    toolName,
-    autonomyLevel,
-    riskTolerance = "balanced",
-    toolParams,
-    target,
-    cost,
-  } = params;
+  const { toolName, autonomyLevel, riskTolerance = "balanced", toolParams, target, cost } = params;
 
   // First, check autonomy level policy
   const autonomyDecision = checkAutonomy(toolName, autonomyLevel);

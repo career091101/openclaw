@@ -1,3 +1,6 @@
+import { mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import { describe, it, expect } from "vitest";
 import {
   rehearseToolOperation,
@@ -5,9 +8,6 @@ import {
   formatRehearsalSummary,
   type ToolRehearsalInput,
 } from "./tool-rehearsal.js";
-import { mkdtempSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
-import path from "node:path";
 
 describe("tool-rehearsal", () => {
   describe("isDestructiveOperation", () => {

@@ -99,7 +99,7 @@ export function createMultiAgentDebateTool(options: {
       try {
         let graph = orchestrationId ? getActiveGraph(orchestrationId) : undefined;
         const isNewGraph = !graph;
-        
+
         if (!graph) {
           graph = createTaskGraph({
             supervisorSessionKey: options.sessionKey ?? "unknown",
@@ -241,9 +241,7 @@ Focus on factual accuracy, logical consistency, and identifying blindspots.`;
  * Helper function to build consensus
  * Called after all debate rounds complete
  */
-export function buildConsensus(
-  agentResponses: Map<string, string[]>,
-): string {
+export function buildConsensus(agentResponses: Map<string, string[]>): string {
   const allRounds = Array.from(agentResponses.entries())
     .map(([agent, responses]) => {
       const evolution = responses

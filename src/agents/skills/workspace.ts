@@ -441,7 +441,7 @@ export function buildWorkspaceSkillCommandSpecs(
 
 /**
  * Rank skills by semantic relevance to a task description
- * 
+ *
  * This function uses semantic embeddings to find skills that are most
  * relevant to the given task, enabling smarter skill discovery beyond
  * keyword matching.
@@ -455,25 +455,25 @@ export async function rankSkillsByRelevance(params: {
 }): Promise<SkillEntry[]> {
   try {
     const { searchSkillsSemantic } = await import("./semantic-clustering.js");
-    
+
     const matches = await searchSkillsSemantic({
       query: params.taskDescription,
       dbPath: params.embeddingsDbPath,
       limit: params.limit ?? 10,
       threshold: params.threshold ?? 0.7,
     });
-    
-    const matchMap = new Map(matches.map(m => [m.skillName, m.score]));
-    
+
+    const matchMap = new Map(matches.map((m) => [m.skillName, m.score]));
+
     // Filter and sort entries by semantic match scores
     const ranked = params.entries
-      .filter(entry => matchMap.has(entry.skill.name))
+      .filter((entry) => matchMap.has(entry.skill.name))
       .sort((a, b) => {
         const scoreA = matchMap.get(a.skill.name) ?? 0;
         const scoreB = matchMap.get(b.skill.name) ?? 0;
         return scoreB - scoreA;
       });
-    
+
     return ranked;
   } catch (error) {
     skillsLogger.warn("Failed to rank skills semantically, falling back to all entries", { error });

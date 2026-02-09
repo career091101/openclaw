@@ -1,13 +1,13 @@
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
 import { emptyPluginConfigSchema } from "openclaw/plugin-sdk";
+import { createHandoffToAgentTool } from "./src/agent-handoff/tool.js";
 import { createTripwireMonitor } from "./src/guardrails/tripwire.js";
 import { createAuditTrail } from "./src/observability/audit-trail.js";
 import { createCheckTaskStatusTool } from "./src/tools/check-task-status.js";
 import { createDelegateTaskTool } from "./src/tools/delegate-task.js";
+import { createMultiAgentDebateTool } from "./src/tools/multi-agent-debate.js";
 import { createRequestReviewTool } from "./src/tools/request-review.js";
 import { createSubmitResultTool } from "./src/tools/submit-result.js";
-import { createMultiAgentDebateTool } from "./src/tools/multi-agent-debate.js";
-import { createHandoffToAgentTool } from "./src/agent-handoff/tool.js";
 
 /** Resolve a per-agent feature flag from config, falling back to defaults. */
 function resolveAgentFeature(
@@ -61,7 +61,16 @@ const orchestratorPlugin = {
           createHandoffToAgentTool({ config, sessionKey: ctx.sessionKey }),
         ];
       },
-      { names: ["delegate_task", "check_task_status", "submit_result", "request_review", "multi_agent_debate", "handoff_to_agent"] },
+      {
+        names: [
+          "delegate_task",
+          "check_task_status",
+          "submit_result",
+          "request_review",
+          "multi_agent_debate",
+          "handoff_to_agent",
+        ],
+      },
     );
 
     // Register tripwire monitor

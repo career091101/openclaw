@@ -3,11 +3,11 @@
  * Inspired by OpenAI's Swarm framework for agent delegation.
  */
 
-import { Type } from "@sinclair/typebox";
 import type { OpenClawConfig } from "openclaw/plugin-sdk";
+import { Type } from "@sinclair/typebox";
+import type { HandoffStrategy } from "./types.js";
 import { executeHandoff } from "./executor.js";
 import { findAgent, getAgent, listAgents } from "./registry.js";
-import type { HandoffStrategy } from "./types.js";
 
 const HandoffToAgentSchema = Type.Object({
   targetAgentId: Type.Optional(
@@ -33,11 +33,7 @@ const HandoffToAgentSchema = Type.Object({
   ),
   strategy: Type.Optional(
     Type.Union(
-      [
-        Type.Literal("immediate"),
-        Type.Literal("wait-for-completion"),
-        Type.Literal("async"),
-      ],
+      [Type.Literal("immediate"), Type.Literal("wait-for-completion"), Type.Literal("async")],
       {
         description:
           "Handoff strategy: immediate (transfer control), wait-for-completion (wait for result), or async (fire and forget)",

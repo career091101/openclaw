@@ -1,8 +1,8 @@
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
 import { emptyPluginConfigSchema } from "openclaw/plugin-sdk";
 import type { MemorySearchFn } from "./src/jit-context.js";
-import { classifyError } from "./src/error-classifier.js";
 import { createConfidenceEscalation } from "./src/confidence-escalation.js";
+import { classifyError } from "./src/error-classifier.js";
 import { recordToolSuccess } from "./src/few-shot-examples.js";
 import { createJitContextInjector } from "./src/jit-context.js";
 import { createRetryWrapper } from "./src/retry-wrapper.js";

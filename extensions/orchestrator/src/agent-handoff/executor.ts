@@ -5,10 +5,10 @@
 
 import crypto from "node:crypto";
 import type { GatewayMessageChannel } from "../../../../src/utils/message-channel.js";
+import type { HandoffContext, HandoffResult, HandoffStrategy } from "./types.js";
+import { AGENT_LANE_NESTED } from "../../../../src/agents/lanes.js";
 import { callGateway } from "../../../../src/gateway/call.js";
 import { createSubsystemLogger } from "../../../../src/logging/subsystem.js";
-import { AGENT_LANE_NESTED } from "../../../../src/agents/lanes.js";
-import type { HandoffContext, HandoffResult, HandoffStrategy } from "./types.js";
 import { getAgent } from "./registry.js";
 
 const log = createSubsystemLogger("agent-handoff/executor");
@@ -48,10 +48,7 @@ export function getHandoffContext(handoffId: string): HandoffContext | undefined
 /**
  * Update shared state in a handoff context.
  */
-export function updateHandoffState(
-  handoffId: string,
-  updates: Record<string, unknown>,
-): boolean {
+export function updateHandoffState(handoffId: string, updates: Record<string, unknown>): boolean {
   const context = activeHandoffs.get(handoffId);
   if (!context) {
     return false;
@@ -88,7 +85,7 @@ export async function executeHandoff(params: {
     reason,
     sharedState = {},
     strategy = "wait-for-completion",
-    sourceChannel,
+    sourceChannel: _sourceChannel,
     timeoutMs = 60_000,
   } = params;
 
@@ -116,13 +113,11 @@ export async function executeHandoff(params: {
     sharedState,
   });
 
-  log.info(
-    `Handoff initiated: ${sourceSessionKey} -> ${targetAgentId} (${context.handoffId})`,
-  );
+  log.info(`Handoff initiated: ${sourceSessionKey} -> ${targetAgentId} (${context.handoffId})`);
 
   try {
     // Build the target session key
-    const sourceAgentId = sourceSessionKey.split(":")?.[1] ?? "unknown";
+    const _sourceAgentId = sourceSessionKey.split(":")?.[1] ?? "unknown";
     const targetSessionKey = `agent:${targetAgentId}:handoff:${context.handoffId}`;
 
     // Build the specialized system prompt
