@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { checkAutonomy, describeAutonomyLevel, isDestructiveTool } from "./autonomy-levels.js";
+import {
+  checkAutonomy,
+  checkAutonomyWithRisk,
+  assessToolRisk,
+  describeAutonomyLevel,
+  isDestructiveTool,
+} from "./autonomy-levels.js";
 
 describe("checkAutonomy", () => {
   describe("Level 0", () => {
@@ -80,5 +86,142 @@ describe("isDestructiveTool", () => {
   it("does not flag non-destructive tools", () => {
     expect(isDestructiveTool("read")).toBe(false);
     expect(isDestructiveTool("write")).toBe(false);
+  });
+});
+
+describe("checkAutonomyWithRisk", () => {
+  describe("Level 4 with risk-based scoring", () => {
+    it("allows low-risk operations with balanced tolerance", () => {
+      const result = checkAutonomyWithRisk({
+        toolName: "read",
+        autonomyLevel: 4,
+        riskTolerance: "balanced",
+      });
+      expect(result.requiresApproval).toBe(false);
+      expect(result.riskScore?.level).toBe("low");
+    });
+
+    it("requires approval for high-risk operations with balanced tolerance", () => {
+      const result = checkAutonomyWithRisk({
+        toolName: "exec",
+        autonomyLevel: 4,
+        riskTolerance: "balanced",
+        toolParams: { command: "rm -rf /" },
+        target: "/etc/passwd",
+      });
+      expect(result.requiresApproval).toBe(true);
+      expect(result.riskScore).toBeDefined();
+      expect(result.riskScore?.level).toBeOneOf(["high", "critical"]);
+    });
+
+    it("requires approval for costly operations with conservative tolerance", () => {
+      const result = checkAutonomyWithRisk({
+        toolName: "web_fetch",
+        autonomyLevel: 4,
+        riskTolerance: "conservative",
+        cost: 0.5,
+      });
+      // Conservative threshold is 3, web_fetch + cost should push it over
+      expect(result.riskScore).toBeDefined();
+    });
+
+    it("allows more operations with aggressive tolerance", () => {
+      const result = checkAutonomyWithRisk({
+        toolName: "exec",
+        autonomyLevel: 4,
+        riskTolerance: "aggressive",
+        toolParams: { command: "ls" },
+      });
+      // Aggressive threshold is 9, basic exec should pass
+      expect(result.requiresApproval).toBe(false);
+    });
+  });
+
+  describe("Lower autonomy levels (0-3)", () => {
+    it("honors autonomy-level policy at level 1", () => {
+      const result = checkAutonomyWithRisk({
+        toolName: "write",
+        autonomyLevel: 1,
+        riskTolerance: "aggressive",
+      });
+      // Level 1 requires approval for write tools, regardless of risk tolerance
+      expect(result.requiresApproval).toBe(true);
+      expect(result.reason).toContain("level 1");
+    });
+
+    it("honors autonomy-level policy at level 2", () => {
+      const result = checkAutonomyWithRisk({
+        toolName: "exec",
+        autonomyLevel: 2,
+        riskTolerance: "aggressive",
+      });
+      // Level 2 requires approval for execution tools
+      expect(result.requiresApproval).toBe(true);
+    });
+
+    it("honors autonomy-level policy at level 3", () => {
+      const result = checkAutonomyWithRisk({
+        toolName: "message",
+        autonomyLevel: 3,
+        riskTolerance: "aggressive",
+      });
+      // Level 3 requires approval for external communication
+      expect(result.requiresApproval).toBe(true);
+    });
+  });
+
+  describe("Risk score details", () => {
+    it("includes risk score in decision for level 4", () => {
+      const result = checkAutonomyWithRisk({
+        toolName: "write",
+        autonomyLevel: 4,
+        target: "/workspace/test.txt",
+      });
+      expect(result.riskScore).toBeDefined();
+      expect(result.riskScore?.score).toBeGreaterThanOrEqual(0);
+      expect(result.riskScore?.factors).toBeDefined();
+      expect(result.riskScore?.factors.length).toBeGreaterThan(0);
+    });
+
+    it("provides detailed reason including risk explanation", () => {
+      const result = checkAutonomyWithRisk({
+        toolName: "exec",
+        autonomyLevel: 4,
+        riskTolerance: "balanced",
+        toolParams: { command: "rm file.txt" },
+      });
+      expect(result.reason).toContain("Risk:");
+      expect(result.reason).toMatch(/\d+\/10/);
+    });
+  });
+});
+
+describe("assessToolRisk", () => {
+  it("returns risk score for any tool", () => {
+    const risk = assessToolRisk({ toolName: "read" });
+    expect(risk.score).toBeDefined();
+    expect(risk.level).toBeDefined();
+    expect(risk.factors).toBeDefined();
+  });
+
+  it("considers tool parameters in risk assessment", () => {
+    const withoutParams = assessToolRisk({ toolName: "exec" });
+    const withDangerous = assessToolRisk({
+      toolName: "exec",
+      toolParams: { command: "rm -rf /" },
+    });
+    expect(withDangerous.score).toBeGreaterThan(withoutParams.score);
+  });
+
+  it("considers target paths in risk assessment", () => {
+    const workspace = assessToolRisk({
+      toolName: "write",
+      target: "/workspace/file.txt",
+    });
+    const system = assessToolRisk({
+      toolName: "write",
+      target: "/etc/config",
+    });
+    expect(system.score).toBeGreaterThan(workspace.score);
   });
 });

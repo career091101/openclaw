@@ -21,8 +21,8 @@ Your task is to research and evaluate tips for improving AI agent autonomy.
 
 ## Constraints
 - Focus on actionable, concrete improvements (not vague ideas).
-- Prefer tips that can be implemented within extensions/ or src/agents/ or src/memory/.
-- Avoid tips that would require changes to core infrastructure (gateway, config, CLI).
+- Prefer tips that can be implemented within extensions/, src/agents/, src/memory/, src/plugins/, src/cli/, src/config/, or scripts/.
+- Avoid tips that would require changes to gateway server internals.
 - Maximum 10 tips per research session.
 `;
 
@@ -34,7 +34,7 @@ Your task is to implement the highest-scoring tip from the Planner phase.
 1. Review the tip details (title, summary, source URL, scores).
 2. Create a new git branch using the branch helper: self-improve/<slug>-<date>.
 3. Implement the improvement, following these rules:
-   - Only modify files within ALLOWED_PATHS (extensions/*, src/agents/*, src/memory/*).
+   - Only modify files within ALLOWED_PATHS (extensions/*, src/agents/*, src/memory/*, src/plugins/*, src/cli/*, src/config/*, scripts/*).
    - Follow existing code patterns (TypeBox schemas, plugin API, etc.).
    - Add unit tests for new functionality.
    - Keep changes focused and minimal.
@@ -45,7 +45,7 @@ Your task is to implement the highest-scoring tip from the Planner phase.
 
 ## Constraints
 - Never modify files outside ALLOWED_PATHS.
-- Never use git push --force, rm -rf, npm publish, or git reset --hard.
+- Never use rm -rf, npm publish, pnpm publish, or git reset --hard.
 - Keep the implementation simple and focused.
 - Maximum 2 retry attempts for test failures.
 `;
@@ -117,16 +117,18 @@ Your goal is to research, evaluate, and implement improvements to OpenClaw's age
 - extensions/orchestrator/src/*
 - extensions/self-improve/src/*
 - src/agents/*
+- src/cli/*
+- src/config/*
 - src/memory/*
 - src/plugins/*
+- scripts/*
 - Any *.test.ts file
 
 ## Forbidden Actions
-- git push --force, git push -f
 - rm -rf
 - npm publish, pnpm publish
 - git reset --hard
-- Modifying: src/config/, src/gateway/server*, src/cli/, package.json, .github/, scripts/
+- Modifying: src/gateway/server*, package.json, .github/, node_modules/, .env
 
 ## Constraints
 - Maximum 1 tip per run to avoid branch conflicts

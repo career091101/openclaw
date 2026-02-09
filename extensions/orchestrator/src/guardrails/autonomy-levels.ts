@@ -7,9 +7,18 @@
  * Level 2: Planning + read are autonomous, execution requires approval
  * Level 3: Most execution is autonomous, external communication requires approval
  * Level 4: Full autonomy (goal delegation)
+ *
+ * Can be enhanced with risk-based scoring for more granular control.
  */
 
 import type { AutonomyLevel } from "../../../../src/agents/orchestration/types.js";
+import {
+  calculateRiskScore,
+  checkRiskThreshold,
+  explainRiskScore,
+  type RiskTolerance,
+  type RiskScore,
+} from "./risk-scoring.js";
 
 // Read-only tools that never modify state
 const READ_ONLY_TOOLS = new Set([
@@ -35,6 +44,7 @@ export type AutonomyDecision = {
   allowed: boolean;
   requiresApproval: boolean;
   reason: string;
+  riskScore?: RiskScore; // Optional risk assessment details
 };
 
 /**
@@ -118,4 +128,80 @@ export function describeAutonomyLevel(level: AutonomyLevel): string {
 export function isDestructiveTool(toolName: string): boolean {
   const destructive = new Set(["exec", "memory_forget", "process"]);
   return destructive.has(toolName.trim().toLowerCase());
+}
+
+/**
+ * Check autonomy with risk-based scoring overlay.
+ * Combines autonomy-level policy with granular risk assessment.
+ *
+ * At level 4, risk tolerance is applied. At lower levels, autonomy-level policy takes precedence.
+ */
+export function checkAutonomyWithRisk(params: {
+  toolName: string;
+  autonomyLevel: AutonomyLevel;
+  riskTolerance?: RiskTolerance;
+  toolParams?: Record<string, unknown>;
+  target?: string;
+  cost?: number;
+}): AutonomyDecision {
+  const {
+    toolName,
+    autonomyLevel,
+    riskTolerance = "balanced",
+    toolParams,
+    target,
+    cost,
+  } = params;
+
+  // First, check autonomy level policy
+  const autonomyDecision = checkAutonomy(toolName, autonomyLevel);
+
+  // If autonomy level already requires approval (levels 0-3), honor that
+  if (autonomyLevel < 4 && autonomyDecision.requiresApproval) {
+    return autonomyDecision;
+  }
+
+  // At level 4 (full autonomy), apply risk-based scoring
+  if (autonomyLevel === 4) {
+    const riskScore = calculateRiskScore({
+      toolName,
+      toolParams,
+      target,
+      cost,
+    });
+
+    const riskCheck = checkRiskThreshold(riskScore, riskTolerance);
+
+    if (riskCheck.requiresApproval) {
+      return {
+        allowed: true,
+        requiresApproval: true,
+        reason: `${riskCheck.reason}: ${explainRiskScore(riskScore)}`,
+        riskScore,
+      };
+    }
+
+    return {
+      allowed: true,
+      requiresApproval: false,
+      reason: `autonomous at level 4 with ${riskTolerance} risk tolerance: ${explainRiskScore(riskScore)}`,
+      riskScore,
+    };
+  }
+
+  // Level 3 and below: if not already requiring approval, allow autonomously
+  return autonomyDecision;
+}
+
+/**
+ * Get risk assessment for a tool call without making an approval decision.
+ * Useful for logging, monitoring, or user information.
+ */
+export function assessToolRisk(params: {
+  toolName: string;
+  toolParams?: Record<string, unknown>;
+  target?: string;
+  cost?: number;
+}): RiskScore {
+  return calculateRiskScore(params);
 }
