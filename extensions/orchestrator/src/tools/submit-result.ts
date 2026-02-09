@@ -4,10 +4,10 @@
 
 import type { OpenClawConfig } from "openclaw/plugin-sdk";
 import { Type } from "@sinclair/typebox";
+import { reflectOnTaskResult } from "../../../agent-autonomy/src/task-reflection.js";
 import { updateTaskStatus } from "../task-graph.js";
 import { saveGraph } from "../task-graph.store.js";
 import { getActiveGraph } from "./delegate-task.js";
-import { reflectOnTaskResult } from "../../../agent-autonomy/src/task-reflection.js";
 
 const SubmitResultSchema = Type.Object({
   orchestrationId: Type.String({ description: "Orchestration ID" }),

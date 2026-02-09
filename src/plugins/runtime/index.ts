@@ -8,7 +8,6 @@ import {
   createMemoryUpdateTool,
   createMemoryForgetTool,
 } from "../../agents/tools/memory-tool.js";
-import { getMemorySearchManager } from "../../memory/search-manager.js";
 import { handleSlackAction } from "../../agents/tools/slack-actions.js";
 import { handleWhatsAppAction } from "../../agents/tools/whatsapp-actions.js";
 import {
@@ -110,6 +109,7 @@ import { fetchRemoteMedia } from "../../media/fetch.js";
 import { getImageMetadata, resizeToJpeg } from "../../media/image-ops.js";
 import { detectMime } from "../../media/mime.js";
 import { saveMediaBuffer } from "../../media/store.js";
+import { getMemorySearchManager } from "../../memory/search-manager.js";
 import { buildPairingReply } from "../../pairing/pairing-messages.js";
 import {
   readChannelAllowFromStore,
