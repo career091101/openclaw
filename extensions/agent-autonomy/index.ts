@@ -5,6 +5,7 @@ import { createJitContextInjector } from "./src/jit-context.js";
 import { createRetryWrapper } from "./src/retry-wrapper.js";
 import { createStructuredCompaction } from "./src/structured-compaction.js";
 import { createToolResultValidator } from "./src/tool-result-validator.js";
+import { recordToolSuccess } from "./src/few-shot-examples.js";
 
 // Tool rehearsal module is available but not yet integrated into the plugin hooks
 // import {
@@ -26,6 +27,19 @@ export {
   type LoopResult,
   type StopCondition,
 } from "./src/continuous-loop.js";
+
+// Export few-shot example utilities for programmatic use
+export {
+  calculateToolSimilarity,
+  ToolExampleStore,
+  formatExamplesForPrompt,
+  getGlobalToolExampleStore,
+  recordToolSuccess,
+  getFewShotExamples,
+  type ToolCallExample,
+  type FewShotConfig,
+  type SimilarityMetric,
+} from "./src/few-shot-examples.js";
 
 const agentAutonomyPlugin = {
   id: "agent-autonomy",
@@ -62,6 +76,16 @@ const agentAutonomyPlugin = {
     const validator = createToolResultValidator();
     api.on("after_tool_call", async (_ctx, event) => {
       validator.validate(event);
+      
+      // Auto-record successful tool calls for few-shot learning
+      if (event.result && !event.error) {
+        recordToolSuccess(
+          event.toolName,
+          event.parameters as Record<string, unknown>,
+          event.result,
+          event.context,
+        );
+      }
     });
 
     // Register retry context injection hook
