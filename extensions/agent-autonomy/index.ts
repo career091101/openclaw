@@ -6,6 +6,20 @@ import { createRetryWrapper } from "./src/retry-wrapper.js";
 import { createStructuredCompaction } from "./src/structured-compaction.js";
 import { createToolResultValidator } from "./src/tool-result-validator.js";
 
+// Export continuous loop utilities for programmatic use
+export {
+  continuousLoop,
+  retryUntilSuccess,
+  iterationCountIs,
+  tokenCountIs,
+  costIs,
+  type ContinuousLoopOptions,
+  type ExecuteFunction,
+  type VerificationResult,
+  type LoopResult,
+  type StopCondition,
+} from "./src/continuous-loop.js";
+
 const agentAutonomyPlugin = {
   id: "agent-autonomy",
   name: "Agent Autonomy",
@@ -60,7 +74,9 @@ const agentAutonomyPlugin = {
           cfg,
           agentId,
         });
-        if (!manager) return [];
+        if (!manager) {
+          return [];
+        }
         const results = await manager.search(query, opts);
         return results ?? [];
       };
