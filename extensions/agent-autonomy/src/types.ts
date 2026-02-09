@@ -69,3 +69,28 @@ export type MemoryDecayEntry = {
   priority: MemoryPriority;
   decayScore: number;
 };
+
+export type ToolExecutionRecord = {
+  toolName: string;
+  success: boolean;
+  executionTimeMs: number;
+  errorCategory?: ToolErrorCategory;
+  timestamp: number;
+};
+
+export type ToolAnalytics = {
+  toolName: string;
+  totalCalls: number;
+  successfulCalls: number;
+  failedCalls: number;
+  successRate: number;
+  averageExecutionTimeMs: number;
+  commonErrors: Array<{ category: ToolErrorCategory; count: number }>;
+  lastUsed: number;
+};
+
+export type ToolAnalyticsSnapshot = {
+  version: string;
+  generatedAt: number;
+  tools: Record<string, ToolAnalytics>;
+};

@@ -1,9 +1,11 @@
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
 import { emptyPluginConfigSchema } from "openclaw/plugin-sdk";
 import type { MemorySearchFn } from "./src/jit-context.js";
+import { classifyError } from "./src/error-classifier.js";
 import { createJitContextInjector } from "./src/jit-context.js";
 import { createRetryWrapper } from "./src/retry-wrapper.js";
 import { createStructuredCompaction } from "./src/structured-compaction.js";
+import { createToolAnalyticsTracker } from "./src/tool-analytics.js";
 import { createToolResultValidator } from "./src/tool-result-validator.js";
 
 const agentAutonomyPlugin = {
@@ -37,9 +39,29 @@ const agentAutonomyPlugin = {
       { names: ["memory_write", "memory_update", "memory_forget"] },
     );
 
+    // Register tool analytics tracker
+    const analyticsTracker = createToolAnalyticsTracker();
+
     // Register tool result validation hook
     const validator = createToolResultValidator();
     api.on("after_tool_call", async (_ctx, event) => {
+      // Record analytics
+      const startTime = event.startTimeMs ?? Date.now();
+      const endTime = Date.now();
+      const executionTimeMs = endTime - startTime;
+
+      const success = !event.isError;
+      const errorCategory =
+        event.isError && event.content ? classifyError(String(event.content)).category : undefined;
+
+      analyticsTracker.recordExecution({
+        toolName: event.toolName ?? "unknown",
+        success,
+        executionTimeMs,
+        errorCategory,
+      });
+
+      // Validate
       validator.validate(event);
     });
 
@@ -60,11 +82,33 @@ const agentAutonomyPlugin = {
           cfg,
           agentId,
         });
-        if (!manager) return [];
+        if (!manager) {
+          return [];
+        }
         const results = await manager.search(query, opts);
         return results ?? [];
       };
       return await jitContext.inject(event, searchFn);
+    });
+
+    // Register tool analytics recommendations hook
+    api.on("before_agent_start", async (_ctx, _event) => {
+      // Get all tracked tools
+      const allAnalytics = analyticsTracker.getAllAnalytics();
+      if (allAnalytics.length === 0) {
+        return undefined;
+      }
+
+      // Extract tool names
+      const toolNames = allAnalytics.map((a) => a.toolName);
+
+      // Get recommendations
+      const recommendations = analyticsTracker.getRecommendations(toolNames);
+      if (!recommendations) {
+        return undefined;
+      }
+
+      return { prependContext: recommendations };
     });
 
     // Register structured compaction hooks

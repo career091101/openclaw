@@ -53,41 +53,41 @@ describe("Skill Semantic Index", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
-  
+
   it("should index all skills", async () => {
     const result = await indexAllSkills({
       workspaceDir: "/fake/workspace",
       forceReindex: false,
     });
-    
+
     expect(result.indexed).toBe(2);
     expect(result.errors).toBe(0);
   });
-  
+
   it("should find relevant skills for file operations", async () => {
     const results = await findRelevantSkills({
       taskDescription: "I need to read a file",
     });
-    
+
     expect(results.length).toBeGreaterThan(0);
     expect(results[0].skillName).toBe("file-reader");
     expect(results[0].score).toBeGreaterThan(0.9);
   });
-  
+
   it("should find relevant skills for notifications", async () => {
     const results = await findRelevantSkills({
       taskDescription: "Send a message to Slack",
     });
-    
+
     expect(results.length).toBeGreaterThan(0);
     expect(results[0].skillName).toBe("slack-notify");
   });
-  
+
   it("should return empty array when no relevant skills found", async () => {
     const results = await findRelevantSkills({
       taskDescription: "Something completely unrelated",
     });
-    
+
     expect(results).toEqual([]);
   });
 });
