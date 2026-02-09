@@ -96,14 +96,16 @@ const selfImprovePlugin = {
       await handleImproveHistory({ params: opts.params, respond: opts.respond });
     });
     api.registerGatewayMethod("improve.run", async (opts) => {
-      const { handleImproveRun } =
-        await import("./src/gateway-methods/improve-run.js");
+      const { handleImproveRun } = await import("./src/gateway-methods/improve-run.js");
       await handleImproveRun({ params: opts.params, respond: opts.respond, context: opts.context });
     });
     api.registerGatewayMethod("improve.schedule", async (opts) => {
-      const { handleImproveSchedule } =
-        await import("./src/gateway-methods/improve-schedule.js");
-      await handleImproveSchedule({ params: opts.params, respond: opts.respond, context: opts.context });
+      const { handleImproveSchedule } = await import("./src/gateway-methods/improve-schedule.js");
+      await handleImproveSchedule({
+        params: opts.params,
+        respond: opts.respond,
+        context: opts.context,
+      });
     });
 
     // Register CLI commands
@@ -206,13 +208,14 @@ const selfImprovePlugin = {
           .option("--timeout <ms>", "Timeout in ms", "10000")
           .action(async (opts: Record<string, string | boolean | undefined>) => {
             const { callGateway } = await import("openclaw/gateway/call");
-            const action = opts.remove === true
-              ? "remove"
-              : opts.disable === true
-                ? "disable"
-                : opts.enable === true || typeof opts.set === "string"
-                  ? "enable"
-                  : "status";
+            const action =
+              opts.remove === true
+                ? "remove"
+                : opts.disable === true
+                  ? "disable"
+                  : opts.enable === true || typeof opts.set === "string"
+                    ? "enable"
+                    : "status";
             try {
               const result = await callGateway({
                 url: typeof opts.url === "string" ? opts.url : undefined,
