@@ -107,3 +107,36 @@ export type ConfidenceEscalationConfig = {
   threshold?: number;
   windowSize?: number;
 };
+
+/** A recorded tool transition: toolA was followed by toolB. */
+export type ToolTransition = {
+  from: string;
+  to: string;
+  success: boolean;
+  timestamp: number;
+};
+
+/** Aggregated stats for a single tool transition (A → B). */
+export type TransitionStats = {
+  from: string;
+  to: string;
+  count: number;
+  successCount: number;
+  successRate: number;
+  lastSeen: number;
+};
+
+/** A recommendation for which tool to use next. */
+export type ToolSequenceRecommendation = {
+  toolName: string;
+  score: number;
+  transitionCount: number;
+  successRate: number;
+};
+
+/** Snapshot for persisting tool sequence data. */
+export type ToolSequenceSnapshot = {
+  version: string;
+  generatedAt: number;
+  transitions: Record<string, TransitionStats[]>;
+};
