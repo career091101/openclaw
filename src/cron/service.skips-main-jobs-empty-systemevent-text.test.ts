@@ -68,17 +68,17 @@ describe("CronService", () => {
 
     await cron.start();
     const atMs = Date.parse("2025-12-13T00:00:01.000Z");
-    await cron.add({
+    const added = await cron.add({
       name: "empty systemEvent test",
       enabled: true,
+      deleteAfterRun: false,
       schedule: { kind: "at", at: new Date(atMs).toISOString() },
       sessionTarget: "main",
       wakeMode: "now",
       payload: { kind: "systemEvent", text: "   " },
     });
 
-    vi.setSystemTime(new Date("2025-12-13T00:00:01.000Z"));
-    await vi.runOnlyPendingTimersAsync();
+    await cron.run(added.id, "force");
 
     expect(enqueueSystemEvent).not.toHaveBeenCalled();
     expect(requestHeartbeatNow).not.toHaveBeenCalled();
