@@ -37,8 +37,8 @@ export class SignalStore {
     }
     try {
       return JSON.parse(readFileSync(this.filePath, "utf-8"));
-    } catch (err) {
-      console.error(`SignalStore: corrupted state file: ${err}`);
+    } catch (err: unknown) {
+      console.error("SignalStore: corrupted state file:", err);
       // Backup corrupted file
       const corruptedPath = `${this.filePath}.corrupted.${Date.now()}`;
       try {

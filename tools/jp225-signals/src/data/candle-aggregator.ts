@@ -27,7 +27,7 @@ export function aggregateToH4(h1Candles: Candle[]): Candle[] {
   }
 
   const result: Candle[] = [];
-  const sortedKeys = Array.from(groups.keys()).toSorted((a, b) => a - b);
+  const sortedKeys = Array.from(groups.keys()).toSorted((a: number, b: number) => a - b);
 
   for (const key of sortedKeys) {
     const group = groups.get(key)!;

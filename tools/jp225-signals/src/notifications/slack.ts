@@ -35,8 +35,8 @@ export async function sendSlackMessage(text: string, config: Config): Promise<bo
 
       const data = (await res.json()) as { ok: boolean };
       return data.ok;
-    } catch (err) {
-      console.error(`Slack API request error: ${err}`);
+    } catch (err: unknown) {
+      console.error("Slack API request error:", err);
       if (attempt < maxRetries) {
         await new Promise((r) => setTimeout(r, 1000 * Math.pow(2, attempt)));
         continue;
