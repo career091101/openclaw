@@ -50,9 +50,9 @@ function getDefaultConfig(): Config {
     consecutiveLossLimit: 3,
     consecutiveLossPauseMs: 24 * 60 * 60 * 1000, // 24 hours
     signalExpiryMs: 8 * 60 * 60 * 1000, // 8 hours (extended)
-    atrMultiplierSL: 1.5,
-    atrMultiplierTP1: 1.0,
-    atrMultiplierTP2: 2.0,
+    atrMultiplierSL: 1.0, // tuned: tighter SL halves max drawdown (224 vs 336)
+    atrMultiplierTP1: 1.5, // tuned: wider TP1 improves net P/L (+463 vs +277)
+    atrMultiplierTP2: 3.0, // tuned: 3× ATR target for remaining position
     minScore: 2, // Minimum score to generate signal
     riskPercent: 1.0,
     accountBalance: 1_000_000,
