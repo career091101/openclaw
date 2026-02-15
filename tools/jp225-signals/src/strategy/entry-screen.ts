@@ -1,11 +1,14 @@
 import type { Candle } from "../data/types.js";
 import type { TrendDirection, EntryTrigger } from "./types.js";
-import { stochBullishCross, stochBearishCross, stochLatest } from "../indicators/stochastic.js";
+import { stochLatest } from "../indicators/stochastic.js";
 
 /**
- * Screen 3: M15 entry timing (relaxed)
- * BUY: %K > %D (upward momentum) — no threshold requirement
- * SELL: %K < %D (downward momentum) — no threshold requirement
+ * Screen 3: M15 entry timing
+ * BUY: %K > %D (upward momentum) AND not overbought (%K < 80)
+ * SELL: %K < %D (downward momentum) AND not oversold (%K > 20)
+ *
+ * Rejects entries at extreme zones in the wrong direction to avoid
+ * buying at tops and selling at bottoms.
  */
 export function evaluateEntry(m15Candles: Candle[], direction: TrendDirection): EntryTrigger {
   if (direction === "FLAT") {
@@ -19,11 +22,11 @@ export function evaluateEntry(m15Candles: Candle[], direction: TrendDirection): 
 
   let triggered: boolean;
   if (direction === "BUY") {
-    // Relaxed: %K above %D indicates upward momentum
-    triggered = latest.k > latest.d;
+    // %K above %D + reject overbought (K >= 80)
+    triggered = latest.k > latest.d && latest.k < 80;
   } else {
-    // Relaxed: %K below %D indicates downward momentum
-    triggered = latest.k < latest.d;
+    // %K below %D + reject oversold (K <= 20)
+    triggered = latest.k < latest.d && latest.k > 20;
   }
 
   return { triggered, stochK: latest.k, stochD: latest.d };

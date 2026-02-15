@@ -138,20 +138,37 @@ describe("evaluateEntry (Screen 3)", () => {
     expect(result.stochD).toBe(0);
   });
 
-  it("returns triggered for BUY when K > D", () => {
+  it("returns triggered for BUY when K > D and K < 80", () => {
     // Uptrend should produce K > D
     const candles = candlesFromCloses(trendingUp(37000, 30, 50), 30);
     const result = evaluateEntry(candles, "BUY");
-    if (result.stochK > result.stochD) {
+    if (result.stochK > result.stochD && result.stochK < 80) {
       expect(result.triggered).toBe(true);
     }
   });
 
-  it("returns triggered for SELL when K < D", () => {
+  it("rejects BUY when K >= 80 (overbought)", () => {
+    // Strong uptrend should produce high K (overbought zone)
+    const candles = candlesFromCloses(trendingUp(37000, 30, 200), 30);
+    const result = evaluateEntry(candles, "BUY");
+    if (result.stochK >= 80) {
+      expect(result.triggered).toBe(false);
+    }
+  });
+
+  it("returns triggered for SELL when K < D and K > 20", () => {
     const candles = candlesFromCloses(trendingDown(40000, 30, 50), 30);
     const result = evaluateEntry(candles, "SELL");
-    if (result.stochK < result.stochD) {
+    if (result.stochK < result.stochD && result.stochK > 20) {
       expect(result.triggered).toBe(true);
+    }
+  });
+
+  it("rejects SELL when K <= 20 (oversold)", () => {
+    const candles = candlesFromCloses(trendingDown(40000, 30, 200), 30);
+    const result = evaluateEntry(candles, "SELL");
+    if (result.stochK <= 20) {
+      expect(result.triggered).toBe(false);
     }
   });
 
