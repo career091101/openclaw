@@ -7,7 +7,7 @@ import {
   copyFileSync,
 } from "node:fs";
 import { join, dirname } from "node:path";
-import type { SignalState, Signal, DailyStats } from "../strategy/types.js";
+import type { SignalState, Signal } from "../strategy/types.js";
 import { toJSTDateString } from "./market-hours.js";
 
 const MAX_HISTORY = 100;

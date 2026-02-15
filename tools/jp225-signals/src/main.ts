@@ -76,9 +76,11 @@ async function fetchData(): Promise<MultiTimeframeData | null> {
       currentPrice: raw.currentPrice,
       fetchedAt: Date.now(),
     };
-  } catch (err: any) {
+  } catch (err: unknown) {
     consecutiveDataFailures++;
-    log(`ERROR fetching data (${consecutiveDataFailures}): ${err.message}`);
+    log(
+      `ERROR fetching data (${consecutiveDataFailures}): ${err instanceof Error ? err.message : String(err)}`,
+    );
 
     // Circuit breaker: increase backoff on repeated failures
     if (consecutiveDataFailures >= 3) {
@@ -270,8 +272,8 @@ async function main(): Promise<void> {
     try {
       await analysisLoop();
       writeHeartbeat();
-    } catch (err: any) {
-      log(`Analysis loop error: ${err.message}`);
+    } catch (err: unknown) {
+      log(`Analysis loop error: ${err instanceof Error ? err.message : String(err)}`);
     }
   }, config.analysisIntervalMs);
 
@@ -280,8 +282,8 @@ async function main(): Promise<void> {
     try {
       await monitorLoop();
       writeHeartbeat();
-    } catch (err: any) {
-      log(`Monitor loop error: ${err.message}`);
+    } catch (err: unknown) {
+      log(`Monitor loop error: ${err instanceof Error ? err.message : String(err)}`);
     }
   }, config.monitorIntervalMs);
 
@@ -301,8 +303,8 @@ async function main(): Promise<void> {
           await notifyDailySummary(store.getState(), price, config);
           log("Daily summary sent");
         }
-      } catch (err: any) {
-        log(`Daily summary error: ${err.message}`);
+      } catch (err: unknown) {
+        log(`Daily summary error: ${err instanceof Error ? err.message : String(err)}`);
       }
     },
     5 * 60 * 1000,
