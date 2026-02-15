@@ -1,4 +1,5 @@
 import type { BacktestResult } from "./runner.js";
+import { formatJSTFull } from "../state/market-hours.js";
 
 function fmt(n: number, dec: number = 0): string {
   return n.toLocaleString("en-US", { maximumFractionDigits: dec });
@@ -25,7 +26,7 @@ export function formatConsoleReport(result: BacktestResult, label: string = "Bac
   if (result.signals.length > 0) {
     lines.push("--- Signal Log ---");
     for (const s of result.signals) {
-      const date = new Date(s.entryTime).toISOString().slice(0, 16);
+      const date = formatJSTFull(s.entryTime);
       const pnl = s.pnlPoints >= 0 ? `+${fmt(s.pnlPoints)}` : fmt(s.pnlPoints);
       const tag = s.outcome.replace("_then_", "→").padEnd(12);
       lines.push(

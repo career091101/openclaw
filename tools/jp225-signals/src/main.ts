@@ -11,7 +11,7 @@ import {
   notifyDailySummary,
 } from "./notifications/notifier.js";
 import { shouldSuppressSignal, isDuplicate } from "./state/duplicate-guard.js";
-import { isMarketOpen, isInWarmup } from "./state/market-hours.js";
+import { isMarketOpen, isInWarmup, nowJSTString, toJSTDateString } from "./state/market-hours.js";
 import { SignalStore } from "./state/signal-store.js";
 import { evaluate, checkSignalStatus } from "./strategy/signal-evaluator.js";
 
@@ -24,7 +24,7 @@ let circuitBreakerMultiplier = 1;
 let lastAnalysisAttempt = 0;
 
 function log(msg: string): void {
-  const ts = new Date().toISOString();
+  const ts = nowJSTString();
   console.log(`[${ts}] ${msg}`);
 }
 
@@ -34,7 +34,7 @@ function writeHeartbeat(): void {
     path,
     JSON.stringify({
       timestamp: Date.now(),
-      iso: new Date().toISOString(),
+      iso: nowJSTString(),
       activeSignals: store.getActiveSignals().length,
     }),
   );
@@ -291,7 +291,7 @@ async function main(): Promise<void> {
       try {
         const now = new Date();
         const jstHour = (now.getUTCHours() + 9) % 24;
-        const today = now.toISOString().slice(0, 10);
+        const today = toJSTDateString(now);
         if (jstHour === config.dailySummaryHourJST && lastDailySummaryDate !== today) {
           lastDailySummaryDate = today;
           let price = 0;

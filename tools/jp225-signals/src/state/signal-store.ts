@@ -8,6 +8,7 @@ import {
 } from "node:fs";
 import { join, dirname } from "node:path";
 import type { SignalState, Signal, DailyStats } from "../strategy/types.js";
+import { toJSTDateString } from "./market-hours.js";
 
 const MAX_HISTORY = 100;
 
@@ -127,7 +128,7 @@ export class SignalStore {
   }
 
   private updateDailyStats(signal: Signal): void {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = toJSTDateString();
     let stats = this.state.dailyStats.find((d) => d.date === today);
     if (!stats) {
       stats = { date: today, wins: 0, losses: 0, expired: 0, consecutiveLosses: 0, pnlPoints: 0 };

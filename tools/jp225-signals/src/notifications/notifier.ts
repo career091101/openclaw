@@ -1,6 +1,6 @@
 import type { Config } from "../config.js";
 import type { Signal, SignalState, DailyStats } from "../strategy/types.js";
-import { formatJST } from "../state/market-hours.js";
+import { formatJST, toJSTDateString } from "../state/market-hours.js";
 import { sendMacOSNotification } from "./macos.js";
 import { sendSlackMessage } from "./slack.js";
 
@@ -94,13 +94,12 @@ export async function notifyHealth(message: string, config: Config): Promise<voi
 }
 
 export function buildDailySummaryMessage(state: SignalState, currentPrice: number): string {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = toJSTDateString();
   const stats = state.dailyStats.find((d) => d.date === today);
 
   const active = state.activeSignals.length;
   const todaySignals = state.history.filter((s) => {
-    const d = new Date(s.createdAt).toISOString().slice(0, 10);
-    return d === today;
+    return toJSTDateString(new Date(s.createdAt)) === today;
   });
 
   const wins = stats?.wins ?? 0;

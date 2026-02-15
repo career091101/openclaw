@@ -54,13 +54,56 @@ export function isInWarmup(config: Config, now: Date = new Date()): boolean {
   return false;
 }
 
+const JST_OFFSET_MS = 9 * 60 * 60 * 1000;
+
+function toJST(d: Date): Date {
+  return new Date(d.getTime() + JST_OFFSET_MS);
+}
+
 /**
  * Format a timestamp as JST time string (HH:MM JST)
  */
 export function formatJST(timestamp: number): string {
-  const d = new Date(timestamp);
-  const jst = new Date(d.getTime() + 9 * 60 * 60 * 1000);
+  const jst = toJST(new Date(timestamp));
   const hh = String(jst.getUTCHours()).padStart(2, "0");
   const mm = String(jst.getUTCMinutes()).padStart(2, "0");
   return `${hh}:${mm} JST`;
+}
+
+/**
+ * Format a timestamp as JST datetime string (YYYY-MM-DD HH:MM JST)
+ */
+export function formatJSTFull(timestamp: number): string {
+  const jst = toJST(new Date(timestamp));
+  const y = jst.getUTCFullYear();
+  const mo = String(jst.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(jst.getUTCDate()).padStart(2, "0");
+  const hh = String(jst.getUTCHours()).padStart(2, "0");
+  const mm = String(jst.getUTCMinutes()).padStart(2, "0");
+  return `${y}-${mo}-${dd} ${hh}:${mm} JST`;
+}
+
+/**
+ * Get the current date string in JST (YYYY-MM-DD)
+ */
+export function toJSTDateString(date: Date = new Date()): string {
+  const jst = toJST(date);
+  const y = jst.getUTCFullYear();
+  const mo = String(jst.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(jst.getUTCDate()).padStart(2, "0");
+  return `${y}-${mo}-${dd}`;
+}
+
+/**
+ * Get the current ISO-like timestamp in JST for logging (YYYY-MM-DDTHH:MM:SS+09:00)
+ */
+export function nowJSTString(): string {
+  const jst = toJST(new Date());
+  const y = jst.getUTCFullYear();
+  const mo = String(jst.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(jst.getUTCDate()).padStart(2, "0");
+  const hh = String(jst.getUTCHours()).padStart(2, "0");
+  const mm = String(jst.getUTCMinutes()).padStart(2, "0");
+  const ss = String(jst.getUTCSeconds()).padStart(2, "0");
+  return `${y}-${mo}-${dd}T${hh}:${mm}:${ss}+09:00`;
 }
