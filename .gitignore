@@ -86,3 +86,10 @@ USER.md
 !.agent/workflows/
 /local/
 package-lock.json
+
+# Elliott Wave skill runtime data
+skills/ew/data/**
+!skills/ew/data/.gitkeep
+!skills/ew/data/review/
+skills/ew/data/review/**
+!skills/ew/data/review/.gitkeep
